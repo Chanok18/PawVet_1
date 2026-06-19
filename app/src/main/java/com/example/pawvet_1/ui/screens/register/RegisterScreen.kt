@@ -22,6 +22,7 @@ import com.example.pawvet_1.ui.components.PawVetBaseScreen
 fun RegisterScreen(
     onBackToLogin: () -> Unit
 ) {
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

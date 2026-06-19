@@ -11,8 +11,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** 
- * VIEWMODEL: Gestiona el estado de las citas.
- * Mantiene la UI sincronizada con la base de datos local (Room).
+ * [MVVM - VIEWMODEL CITAS]
+ * - ESTADO: Controla qué se muestra en la pantalla de citas.
+ * - REACTIVIDAD: Usa StateFlow para avisar a la UI cuando hay cambios.
  */
 class CitaViewModel(private val repository: CitaRepository) : ViewModel() {
 
@@ -22,16 +23,16 @@ class CitaViewModel(private val repository: CitaRepository) : ViewModel() {
     init { listarCitas() }
 
     private fun listarCitas() {
+        // - CORRUTINA: Busca los datos sin trabar la aplicación.
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            // Recolectamos el Flow para actualizaciones en tiempo real
+            // - REAL-TIME: Room nos manda la lista actualizada automáticamente.
             repository.getAllCitas().collect { lista ->
                 _uiState.update { it.copy(listaCitas = lista, isLoading = false) }
             }
         }
     }
 
-    // CARGA UNA CITA: Necesaria para el formulario de edición
     fun seleccionarCita(id: Int) {
         viewModelScope.launch {
             val cita = repository.getCitaById(id)
@@ -39,11 +40,14 @@ class CitaViewModel(private val repository: CitaRepository) : ViewModel() {
         }
     }
 
-    // RESET: Limpia la selección para crear una cita nueva desde cero
     fun resetSeleccion() {
         _uiState.update { it.copy(citaSeleccionada = null) }
     }
 
+    /**
+     * [FLUJO]
+     * VISTA (Click) -> VIEWMODEL (Guardar) -> REPOSITORY -> ROOM
+     */
     fun guardarCita(id: Int = 0, mascotaId: Int, fecha: String, hora: String, tipo: String) {
         viewModelScope.launch {
             val cita = Cita(id = id, mascotaId = mascotaId, fecha = fecha, hora = hora, tipo = tipo)

@@ -1,44 +1,46 @@
-# PawVet - Gestión Veterinaria 🐾
+# Proyecto PawVet - Gestión Veterinaria 🐾
 
-Aplicación Android desarrollada con **Jetpack Compose** bajo la arquitectura **MVVM**, diseñada para la gestión de mascotas, citas médicas y consultas inteligentes.
-
-## 🚀 Requisitos del Proyecto (Semana 14)
-- **Interfaz:** 100% Jetpack Compose (Lista, Detalle, Formulario, Asistente).
-- **Navegación:** Navigation Compose con paso de argumentos (ID).
-- **Arquitectura:** MVVM (Model-View-ViewModel).
-- **Persistencia:** Base de datos local con **Room** (CRUD completo).
-- **API:** Consumo de API externa de razas con **Retrofit**.
-- **Patrón Repository:** Única fuente de datos para los ViewModels.
-
-## 📂 Estructura del Proyecto
-
-### 1. Data Layer (`com.example.pawvet_1.data`)
-- **`local/`**: Configuración de Room.
-    - `model/`: Entidades de la base de datos (`Mascota`, `Cita`).
-    - `dao/`: Interfaces con las consultas SQL.
-    - `PawVetDatabase.kt`: Singleton de la base de datos.
-- **`remote/`**: Consumo de API con Retrofit (Dog API para el Asistente).
-- **`repository/`**: Clases que conectan los datos (local/remoto) con el ViewModel.
-
-### 2. UI Layer (`com.example.pawvet_1.ui`)
-- **`viewmodel/`**: Lógica de negocio y manejo de `UiState` usando `StateFlow`.
-- **`screens/`**: Vistas (Composables) que observan el estado.
-    - `home/`: Pantalla principal de navegación.
-    - `mascotas/`: CRUD de mascotas (Lista, Detalle, Registro).
-    - `citas/`: Gestión de citas veterinarias.
-    - `consultas/`: Asistente Virtual (PawBot AI) que consume la API.
-- **`components/`**: Componentes visuales reutilizables.
-
-### 3. Navigation (`com.example.pawvet_1.navigation`)
-- **`PawVetNavGraph.kt`**: Grafo de navegación que define las rutas y argumentos de la app.
-
-## 🛠️ Tecnologías Usadas
-- **Kotlin** & **Coroutines**
-- **Jetpack Compose** (UI moderna)
-- **Room** (Base de datos local)
-- **Retrofit** & **Gson** (Consumo de API)
-- **Navigation Compose**
-- **Material 3** (Diseño)
+**INTEGRANTES:** [Kevin Quispe Ccolque, Junior Cueva]  
+**Temática:** Aplicación para la gestion de una veterinaria , citas de mascotas y consultas veterinarias.
 
 ---
-Desarrollado para el curso de Desarrollo de Aplicaciones Móviles.
+
+## 📱 Capturas de Pantalla
+
+> *Aquí pondré las fotos de mi proyecto funcionando:*
+
+1. **Dashboard Principal:** (Aquí se ve el menú de navegación)  
+   ![img.png](img.png)
+
+2. **Gestión de Mascotas (CRUD):** (Aquí muestro cómo agrego y listo mis mascotas)  
+   ![img_1.png](img_1.png)
+
+3. **Cita medica ():** (Aquí muestro el form)  
+   ![img_3.png](img_3.png)
+
+---
+
+## 🏗️ Aplicación de la Arquitectura MVVM
+En este proyecto usamos **MVVM** para que el código no sea un "espagueti".
+- **Model:** Usamos Room para las tablas de Mascotas y Retrofit para las de la API.
+- **View:** Son nuestras pantallas en Compose que solo muestran lo que el ViewModel les dice.
+- **ViewModel:** Es el cerebro que maneja el "UiState". Cuando algo cambia (como agregar una mascota), el ViewModel actualiza el estado y la pantalla se refresca solita (recomposición).
+
+---
+
+## 🤖 Uso de IA y Trabajo Propio
+
+**Trabajo del equipo:**
+- La lógica de qué campos pedir en cada formulario.
+- **Manejo Offline:** si no hay internet, la app no se cierre y muestre un mensaje de error, algo básico pero que funciona bien.
+- La organización de la base de datos local para que las mascotas se guarden aunque apagues el celular.
+
+**Trabajo con ayuda de la IA:**
+- Me ayudó a armar la estructura básica de las carpetas y la navegación.
+- El chat me guio para corregir errores cuando los datos de la API no cargaban.
+- Lo usé para que me explique términos difíciles y limpiar el código que no usaba.
+
+
+---
+
+**Nota:** Al principio tuvimos problemas conectando el ViewModel con el Repositorio, pero usando el chat logramos entender cómo pasar los datos por el `AppContainer` y así dejar el código ordenado.

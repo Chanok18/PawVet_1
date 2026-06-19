@@ -18,6 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
 
+/**
+ * [VISTA - DASHBOARD]
+ * - SCAFFOLD: Estructura base (TopBar + Contenido).
+ * - COMPOSABLES: Column, Card, Row, Icon.
+ * - NAVEGACIÓN: Botones que disparan eventos (Callbacks) para cambiar de pantalla.
+ */
 @Composable
 fun HomeScreen(
     onCitasClick: () -> Unit,
@@ -35,7 +41,7 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
-            // Sección de Bienvenida
+            // Bienvenida
             Text(
                 text = "¡Hola de nuevo! 🐾",
                 style = MaterialTheme.typography.headlineMedium,
@@ -49,11 +55,12 @@ fun HomeScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Dashboard con opciones como barras horizontales que cubren más ancho y alto
+            // - ORGANIZACIÓN: Lista de opciones tipo tarjetas.
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+
                 DashboardCard(
                     title = "Citas",
                     icon = Icons.Default.DateRange,
@@ -76,7 +83,6 @@ fun HomeScreen(
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Tarjeta de Emergencia Veterinaria (más prominente)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -127,9 +133,9 @@ fun DashboardCard(
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
-            .height(120.dp) // Aumentado ligeramente para cubrir más espacio
+            .height(120.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(28.dp), // Esquinas más redondeadas para un look moderno
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -142,7 +148,7 @@ fun DashboardCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                modifier = Modifier.size(64.dp), // Icono más grande
+                modifier = Modifier.size(64.dp),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {

@@ -11,27 +11,31 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * VIEWMODEL: El "cerebro" de la pantalla de mascotas.
- * Se encarga de transformar los datos del repositorio en estados que la UI pueda entender.
- * Sigue el patrón MVVM separando la lógica de la interfaz.
+ * [MVVM - VIEWMODEL]
+ * - CEREBRO: Maneja la lógica.
+ * - SOBREVIVE: No muere al rotar pantalla.
+ * - DESACOPLADO: No toca la DB directo.
  */
 class MascotaViewModel(private val repository: MascotaRepository) : ViewModel() {
 
-    // Estado interno (Mutable) - Solo el ViewModel puede modificarlo
+    // [ESTADO - UI STATE]
+    // - MUTABLE: Privado, solo yo lo cambio.
     private val _uiState = MutableStateFlow(MascotaUiState())
     
-    // Estado público (Solo lectura) - La Vista observa este estado
+    // - REACTIVO: La vista lo observa (StateFlow).
     val uiState: StateFlow<MascotaUiState> = _uiState.asStateFlow()
 
     init {
-        // Al iniciar, cargamos la lista de mascotas
         listarMascotas()
     }
 
     private fun listarMascotas() {
+        // [CORRUTINAS]
+        // - HILO SECUNDARIO: No congela la app.
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            // Observamos el Flow de la base de datos (actualización en tiempo real)
+            // [FLOW]
+            // - TIEMPO REAL: Si la DB cambia, la UI se actualiza sola.
             repository.getAllMascotas().collect { lista ->
                 _uiState.update { it.copy(listaMascotas = lista, isLoading = false) }
             }
@@ -45,14 +49,13 @@ class MascotaViewModel(private val repository: MascotaRepository) : ViewModel() 
         }
     }
 
-    // Reseteamos el estado para evitar mostrar datos previos al crear una nueva mascota
     fun resetSeleccion() {
         _uiState.update { it.copy(mascotaSeleccionada = null) }
     }
 
     /**
-     * Función para Guardar o Actualizar.
-     * La Vista llama a esta función cuando el usuario presiona el botón.
+     * [FLUJO DEL DATO]
+     * VIEW -> VIEWMODEL -> REPOSITORY -> ROOM (DB)
      */
     fun guardarMascota(id: Int = 0, nombre: String, tipo: String, raza: String, edad: Int, peso: Double) {
         viewModelScope.launch {

@@ -20,6 +20,11 @@ import androidx.compose.ui.unit.sp
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 
+/**
+ * [VISTA - FORMULARIO]
+ * - COMPOSABLES: Card, Column, OutlinedTextField.
+ * - ORGANIZACIÓN: VerticalScroll para que no se corte en pantallas chicas.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MascotaFormScreen(
@@ -27,15 +32,16 @@ fun MascotaFormScreen(
     viewModel: MascotaViewModel,
     onBack: () -> Unit
 ) {
+    // - OBSERVACIÓN: Escuchamos al ViewModel. Si el estado cambia, la UI se RECOMPONE.
     val uiState by viewModel.uiState.collectAsState()
     
+    // - ESTADO LOCAL: Variables temporales para lo que el usuario escribe.
     var nombre by remember { mutableStateOf("") }
     var tipo by remember { mutableStateOf("Perro") }
     var raza by remember { mutableStateOf("") }
     var edad by remember { mutableStateOf("") }
     var peso by remember { mutableStateOf("") }
 
-    // Listas para los dropdowns
     val tiposMascota = listOf("Perro", "Gato", "Hamster", "Conejo", "Ave", "Otro")
     val razasComunes = listOf("Labrador", "Pastor Alemán", "Persa", "Siamés", "Pug", "Chihuahua", "Bulldog", "Mestizo", "Otro")
 
@@ -79,7 +85,6 @@ fun MascotaFormScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Nombre
                     OutlinedTextField(
                         value = nombre,
                         onValueChange = { nombre = it },
@@ -89,7 +94,6 @@ fun MascotaFormScreen(
                         leadingIcon = { Icon(Icons.Default.Face, contentDescription = null) }
                     )
 
-                    // Tipo de Mascota (Dropdown)
                     ExposedDropdownMenuBox(
                         expanded = expandedTipo,
                         onExpandedChange = { expandedTipo = !expandedTipo }
@@ -121,7 +125,6 @@ fun MascotaFormScreen(
                         }
                     }
 
-                    // Raza (Dropdown + Editable opcional)
                     ExposedDropdownMenuBox(
                         expanded = expandedRaza,
                         onExpandedChange = { expandedRaza = !expandedRaza }
@@ -153,7 +156,6 @@ fun MascotaFormScreen(
                     }
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        // Edad
                         OutlinedTextField(
                             value = edad,
                             onValueChange = { if (it.all { char -> char.isDigit() }) edad = it },
@@ -163,7 +165,6 @@ fun MascotaFormScreen(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             suffix = { Text("años") }
                         )
-                        // Peso
                         OutlinedTextField(
                             value = peso,
                             onValueChange = { peso = it },
@@ -177,6 +178,7 @@ fun MascotaFormScreen(
                 }
             }
             
+            // - ACCIÓN: Al pulsar, enviamos los datos al ViewModel.
             Button(
                 onClick = {
                     viewModel.guardarMascota(
