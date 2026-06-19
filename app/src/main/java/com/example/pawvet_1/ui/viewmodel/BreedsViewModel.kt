@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * [API/RETROFIT]
  * - CONSUMO REMOTO: Traemos datos de internet (Dog API).
  * - MANEJO DE ESTADOS: Loading (Cargando), Success (Éxito), Error (Falla).
  * - TRY-CATCH: Captura errores (Ej: No hay internet).
@@ -41,7 +40,7 @@ class BreedsViewModel(private val repository: BreedsRepository) : ViewModel() {
                 _uiState.value = BreedsUiState.Success(breeds)
             } catch (e: Exception) {
                 // - MANEJO DE ERROR: Si falla la red, avisamos a la UI.
-                _uiState.value = BreedsUiState.Error("Error al cargar razas: ${e.message}")
+                _uiState.value = BreedsUiState.Error("Error al cargar imagenes: ${e.message}")
             }
         }
     }
