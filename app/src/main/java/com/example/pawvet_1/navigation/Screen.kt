@@ -1,30 +1,18 @@
 package com.example.pawvet_1.navigation
 
 /**
- * RUTAS DE NAVEGACIÓN SIMPLIFICADAS PARA LA SEMANA 14.
- * Hemos reducido las pantallas a las esenciales para una mejor sustentación.
+ * RUTAS ESENCIALES PARA LA SUSTENTACIÓN.
+ * Solo 4 flujos principales para cumplir con la rúbrica de forma simple.
  */
 sealed class Screen(val route: String) {
     object Home : Screen("home")
-    object Perfil : Screen("perfil")
+    object Perfil : Screen("perfil") // Aquí mostramos la lista (CRUD)
     
-    // Mascotas
-    object MascotaDetalle : Screen("mascota_detalle/{mascotaId}") {
-        fun createRoute(id: Int) = "mascota_detalle/$id"
-    }
+    // Formulario de Mascota (Para Crear/Editar)
     object MascotaForm : Screen("mascota_form/{mascotaId}") {
         fun createRoute(id: Int = 0) = "mascota_form/$id"
     }
 
-    // Citas
-    object CitaForm : Screen("cita_form/{citaId}") {
-        fun createRoute(id: Int = 0) = "cita_form/$id"
-    }
-
-    // Servicios (Estética y Spa)
-    object Servicios : Screen("servicios")
-    object ServicioForm : Screen("servicio_form")
-
-    // API
+    // Pantalla de la API (Consumo de datos externos)
     object ConsultasRapidas : Screen("consultas_rapidas")
 }
