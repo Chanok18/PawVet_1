@@ -13,7 +13,7 @@ import com.example.pawvet_1.data.model.Servicio
 
 @Database(
     entities = [Mascota::class, Cita::class, Servicio::class], 
-    version = 4, // Subimos a 4 para forzar la limpieza total y resolver el error de integridad
+    version = 5, // Incrementamos a 5 para las nuevas columnas de Firebase
     exportSchema = false
 )
 abstract class PawVetDatabase : RoomDatabase() {
@@ -29,7 +29,7 @@ abstract class PawVetDatabase : RoomDatabase() {
         fun getDatabase(context: Context): PawVetDatabase {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, PawVetDatabase::class.java, "pawvet_db")
-                    .fallbackToDestructiveMigration() // Esto limpia la DB vieja si hay cambios, evitando el crash
+                    .fallbackToDestructiveMigration()
                     .build()
                     .also { Instance = it }
             }

@@ -6,19 +6,17 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * [ROOM - DAO]
- * - CONSULTAS SQL: Define qué hacemos con la DB.
- * - @DAO: Interfaz que Room implementa sola.
- * - FLOW: Retorno reactivo para actualizaciones en vivo.
+ * Actualizado para filtrar mascotas por el ID del usuario autenticado.
  */
 @Dao
 interface MascotaDao {
-    @Query("SELECT * FROM mascotas ORDER BY nombre ASC")
-    fun getAllMascotas(): Flow<List<Mascota>>
+
+    @Query("SELECT * FROM mascotas WHERE usuarioId = :usuarioId ORDER BY nombre ASC")
+    fun getMascotasByUser(usuarioId: String): Flow<List<Mascota>>
 
     @Query("SELECT * FROM mascotas WHERE id = :id")
     suspend fun getMascotaById(id: Int): Mascota?
 
-    // - ESTRATEGIA: Replace si hay conflicto (útil en edit).
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMascota(mascota: Mascota)
 
@@ -27,4 +25,10 @@ interface MascotaDao {
 
     @Delete
     suspend fun deleteMascota(mascota: Mascota)
+
+    @Query("DELETE FROM mascotas")
+    suspend fun deleteAll()
+
+    @Query("DELETE FROM mascotas WHERE usuarioId = :usuarioId")
+    suspend fun deleteMascotasByUser(usuarioId: String)
 }

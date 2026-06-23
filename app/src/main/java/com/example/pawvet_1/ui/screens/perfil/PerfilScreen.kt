@@ -8,44 +8,50 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pawvet_1.data.model.Cita
 import com.example.pawvet_1.data.model.Mascota
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
+import com.example.pawvet_1.ui.viewmodel.AuthViewModel
 import com.example.pawvet_1.ui.viewmodel.CitaViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 
-/**
- * PANTALLA DE PERFIL (LISTA): Centraliza la visualización de datos.
- * Esta pantalla actúa como la "Pantalla de Lista" requerida por el proyecto,
- * mostrando los registros de Mascotas y Citas obtenidos de Room.
- */
 @Composable
 fun PerfilScreen(
+    authViewModel: AuthViewModel,
     mascotaViewModel: MascotaViewModel,
     citaViewModel: CitaViewModel,
+    onLogout: () -> Unit,
     onBack: () -> Unit,
     onMascotaClick: (Int) -> Unit,
     onAddMascotaClick: () -> Unit,
     onEditMascotaClick: (Int) -> Unit,
     onEditCitaClick: (Int) -> Unit
 ) {
-    // Observamos los estados de los ViewModels (MVVM)
+    val authState by authViewModel.uiState.collectAsState()
     val mascotaState by mascotaViewModel.uiState.collectAsState()
     val citaState by citaViewModel.uiState.collectAsState()
+
+    // Sincronizar datos cuando el usuario esté disponible
+    LaunchedEffect(authState.usuario) {
+        if (authState.usuario != null) {
+            mascotaViewModel.listarMascotas()
+            citaViewModel.listarCitas()
+        }
+    }
 
     PawVetBaseScreen(
         title = "Mi Perfil PawVet",
@@ -57,7 +63,7 @@ fun PerfilScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header del Usuario
+            // Header del Usuario Real
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -65,32 +71,37 @@ fun PerfilScreen(
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Person, 
-                    contentDescription = null, 
-                    modifier = Modifier.size(56.dp), 
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             
             Text(
-                text = "Usuario Administrador",
+                text = authState.usuario?.email ?: "Usuario PawVet",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 12.dp)
             )
             
+            TextButton(
+                onClick = onLogout,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Cerrar Sesión", fontWeight = FontWeight.Bold)
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 1. SECCIÓN: MIS MASCOTAS (CRUD: Leer, Editar, Eliminar)
+            // 1. SECCIÓN: MIS MASCOTAS (CRUD)
             SectionHeader(title = "Mis Mascotas 🐾", onAddClick = onAddMascotaClick)
             
             if (mascotaState.listaMascotas.isEmpty()) {
-                Text(
-                    text = "No hay mascotas registradas", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = Color.Gray
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Text("No tienes mascotas registradas aún.", modifier = Modifier.padding(16.dp), color = Color.Gray)
+                }
             } else {
                 mascotaState.listaMascotas.forEach { mascota ->
                     MascotaItem(
@@ -104,15 +115,10 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 2. SECCIÓN: CITAS PROGRAMADAS (CRUD Citas)
+            // 2. SECCIÓN: CITAS (CRUD)
             SectionHeader(title = "Próximas Citas 📅")
-            
             if (citaState.listaCitas.isEmpty()) {
-                Text(
-                    text = "No tienes citas pendientes", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = Color.Gray
-                )
+                Text("Sin citas pendientes", color = Color.Gray)
             } else {
                 citaState.listaCitas.forEach { cita ->
                     CitaItem(

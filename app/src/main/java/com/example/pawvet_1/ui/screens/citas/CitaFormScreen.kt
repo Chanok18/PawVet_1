@@ -27,6 +27,9 @@ fun CitaFormScreen(
 ) {
     val uiState by citaViewModel.uiState.collectAsState()
     val mascotaState by mascotaViewModel.uiState.collectAsState()
+    LaunchedEffect(Unit) {
+        mascotaViewModel.listarMascotas()
+    }
 
     // Estados del formulario
     var selectedMascotaId by remember { mutableStateOf<Int?>(null) }

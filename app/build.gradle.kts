@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -32,27 +33,39 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
-
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
+    // CORRECCIÓN: Los guiones del catálogo se acceden con PUNTOS en archivos .kts
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+    // Firebase - IMPORTANTE: Se eliminan los sufijos -ktx porque ya están integrados en los principales
+    // Se usa la versión 33.7.0 que es compatible con tu versión de Kotlin 2.0.x
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-storage")
+    
+    // Coroutines - Usamos 1.9.0 para evitar el error de metadatos de Kotlin 2.2
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // Room
     implementation(libs.androidx.room.runtime)
@@ -65,12 +78,11 @@ dependencies {
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // Retrofit & Networking
+    // Retrofit
     implementation(libs.retrofit.main)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
 
-    // Coil (Carga de imágenes)
     implementation(libs.coil.compose)
 
     testImplementation(libs.junit)

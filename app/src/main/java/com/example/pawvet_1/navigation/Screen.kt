@@ -1,10 +1,11 @@
 package com.example.pawvet_1.navigation
 
 /**
- * RUTAS DE NAVEGACIÓN SIMPLIFICADAS PARA LA SEMANA 14.
- * Hemos reducido las pantallas a las esenciales para una mejor sustentación.
+ * RUTAS DE NAVEGACIÓN: Definición de todos los destinos de la aplicación.
  */
 sealed class Screen(val route: String) {
+    object Login : Screen("login")
+    object Register : Screen("register")
     object Home : Screen("home")
     object Perfil : Screen("perfil")
     
@@ -21,7 +22,7 @@ sealed class Screen(val route: String) {
         fun createRoute(id: Int = 0) = "cita_form/$id"
     }
 
-    // Servicios (Estética y Spa)
+    // Servicios
     object Servicios : Screen("servicios")
     object ServicioForm : Screen("servicio_form")
 

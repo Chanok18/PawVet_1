@@ -4,30 +4,38 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pawvet_1.data.model.Cita
 import com.example.pawvet_1.data.repository.CitaRepository
+import com.example.pawvet_1.notifications.NotificationHelper
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** 
- * [MVVM - VIEWMODEL CITAS]
- * - ESTADO: Controla qué se muestra en la pantalla de citas.
- * - REACTIVIDAD: Usa StateFlow para avisar a la UI cuando hay cambios.
- */
-class CitaViewModel(private val repository: CitaRepository) : ViewModel() {
+class CitaViewModel(
+    private val repository: CitaRepository,
+    private val notificationHelper: NotificationHelper
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CitaUiState())
     val uiState: StateFlow<CitaUiState> = _uiState.asStateFlow()
 
-    init { listarCitas() }
+    private var currentListingJob: Job? = null
 
-    private fun listarCitas() {
-        // - CORRUTINA: Busca los datos sin trabar la aplicación.
-        viewModelScope.launch {
+    /**
+     * Carga las citas filtradas por el usuario actual.
+     */
+    fun listarCitas() {
+        currentListingJob?.cancel()
+        currentListingJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            // - REAL-TIME: Room nos manda la lista actualizada automáticamente.
-            repository.getAllCitas().collect { lista ->
+            
+            try {
+                repository.sincronizarDesdeFirestore()
+            } catch (e: Exception) { }
+
+            // Corregido: Pasamos el usuarioId al repositorio
+            repository.getCitasByUser().collect { lista ->
                 _uiState.update { it.copy(listaCitas = lista, isLoading = false) }
             }
         }
@@ -44,14 +52,25 @@ class CitaViewModel(private val repository: CitaRepository) : ViewModel() {
         _uiState.update { it.copy(citaSeleccionada = null) }
     }
 
-    /**
-     * [FLUJO]
-     * VISTA (Click) -> VIEWMODEL (Guardar) -> REPOSITORY -> ROOM
-     */
     fun guardarCita(id: Int = 0, mascotaId: Int, fecha: String, hora: String, tipo: String) {
         viewModelScope.launch {
-            val cita = Cita(id = id, mascotaId = mascotaId, fecha = fecha, hora = hora, tipo = tipo)
+            val cita = Cita(
+                id = id, 
+                mascotaId = mascotaId, 
+                fecha = fecha, 
+                hora = hora, 
+                tipo = tipo,
+                idFirestore = _uiState.value.citaSeleccionada?.idFirestore ?: ""
+            )
+
             if (id == 0) repository.insertCita(cita) else repository.updateCita(cita)
+            
+            notificationHelper.programarRecordatorio(
+                citaId = if (id == 0) System.currentTimeMillis().toInt() else id,
+                fecha = fecha,
+                hora = hora,
+                tipo = tipo
+            )
         }
     }
 

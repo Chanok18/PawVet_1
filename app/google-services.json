@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "63364035141",
+    "project_id": "powvet-8a1d8",
+    "storage_bucket": "powvet-8a1d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63364035141:android:a00eb45cd6c6d721d4692c",
+        "android_client_info": {
+          "package_name": "com.example.pawvet_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpA--9bYzxch63qt3cKeoFRLqVWap7N7w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

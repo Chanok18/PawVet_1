@@ -6,11 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CitaDao {
-    @Query("SELECT * FROM citas ORDER BY fecha ASC")
-    fun getAllCitas(): Flow<List<Cita>>
-
-    @Query("SELECT * FROM citas WHERE mascotaId = :mascotaId")
-    fun getCitasByMascota(mascotaId: Int): Flow<List<Cita>>
+    @Query("SELECT * FROM citas WHERE usuarioId = :usuarioId ORDER BY fecha ASC")
+    fun getCitasByUser(usuarioId: String): Flow<List<Cita>>
 
     @Query("SELECT * FROM citas WHERE id = :id")
     suspend fun getCitaById(id: Int): Cita?

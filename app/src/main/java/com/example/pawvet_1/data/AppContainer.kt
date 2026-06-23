@@ -2,48 +2,58 @@ package com.example.pawvet_1.data
 
 import android.content.Context
 import com.example.pawvet_1.data.remote.RetrofitClient
+import com.example.pawvet_1.data.repository.AuthRepository
 import com.example.pawvet_1.data.repository.BreedsRepository
 import com.example.pawvet_1.data.repository.CitaRepository
 import com.example.pawvet_1.data.repository.MascotaRepository
 import com.example.pawvet_1.data.repository.ServicioRepository
+import com.example.pawvet_1.notifications.NotificationHelper
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 /**
- * Contenedor de dependencias a nivel de aplicación.
+ * Contenedor de dependencias actualizado para la Etapa 2.
  */
 interface AppContainer {
+    val authRepository: AuthRepository
     val mascotaRepository: MascotaRepository
     val breedsRepository: BreedsRepository
     val citaRepository: CitaRepository
     val servicioRepository: ServicioRepository
+    val notificationHelper: NotificationHelper
 }
 
-/**
- * Implementación del contenedor que provee las instancias de los repositorios.
- */
 class AppDataContainer(private val context: Context) : AppContainer {
     
-    // Lazy property para la base de datos
+    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
+
     private val database: PawVetDatabase by lazy {
         PawVetDatabase.getDatabase(context)
     }
 
-    // Repositorio para Mascotas (Room)
-    override val mascotaRepository: MascotaRepository by lazy {
-        MascotaRepository(database.mascotaDao())
+    override val authRepository: AuthRepository by lazy {
+        AuthRepository(firebaseAuth)
     }
 
-    // Repositorio para Razas (Retrofit)
+    override val mascotaRepository: MascotaRepository by lazy {
+        MascotaRepository(database.mascotaDao(), firestore, firebaseAuth)
+    }
+
     override val breedsRepository: BreedsRepository by lazy {
         BreedsRepository(RetrofitClient.dogApiService)
     }
 
-    // Repositorio para Citas (Room)
     override val citaRepository: CitaRepository by lazy {
-        CitaRepository(database.citaDao())
+        CitaRepository(database.citaDao(), firestore, firebaseAuth)
     }
 
-    // Repositorio para Servicios (Room)
     override val servicioRepository: ServicioRepository by lazy {
         ServicioRepository(database.servicioDao())
+    }
+
+    // Nuevo: Helper para notificaciones
+    override val notificationHelper: NotificationHelper by lazy {
+        NotificationHelper(context)
     }
 }

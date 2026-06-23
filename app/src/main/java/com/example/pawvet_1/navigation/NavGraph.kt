@@ -1,6 +1,8 @@
 package com.example.pawvet_1.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -10,11 +12,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.pawvet_1.data.PawVetDatabase
 import com.example.pawvet_1.data.remote.RetrofitClient
+import com.example.pawvet_1.data.repository.AuthRepository
 import com.example.pawvet_1.data.repository.BreedsRepository
 import com.example.pawvet_1.data.repository.CitaRepository
 import com.example.pawvet_1.data.repository.MascotaRepository
 import com.example.pawvet_1.data.repository.ServicioRepository
 import com.example.pawvet_1.ui.screens.home.HomeScreen
+import com.example.pawvet_1.ui.screens.login.LoginScreen
+import com.example.pawvet_1.ui.screens.register.RegisterScreen
 import com.example.pawvet_1.ui.screens.mascotas.MascotaDetalleScreen
 import com.example.pawvet_1.ui.screens.mascotas.MascotaFormScreen
 import com.example.pawvet_1.ui.screens.citas.CitaFormScreen
@@ -22,31 +27,61 @@ import com.example.pawvet_1.ui.screens.perfil.PerfilScreen
 import com.example.pawvet_1.ui.screens.consultas.ConsultasRapidasScreen
 import com.example.pawvet_1.ui.screens.servicios.ServiciosScreen
 import com.example.pawvet_1.ui.screens.servicios.ServicioFormScreen
+import com.example.pawvet_1.ui.viewmodel.AuthViewModel
 import com.example.pawvet_1.ui.viewmodel.BreedsViewModel
 import com.example.pawvet_1.ui.viewmodel.CitaViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 import com.example.pawvet_1.ui.viewmodel.ServicioViewModel
 import com.example.pawvet_1.ui.viewmodel.ViewModelFactory
+import com.example.pawvet_1.notifications.NotificationHelper
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
-/**
- * GRAFO DE NAVEGACIÓN ACTUALIZADO:
- * Hemos restaurado la pantalla de Servicios (Estética) para separar el catálogo
- * del asistente de consultas rápidas.
- */
 @Composable
 fun PawVetNavGraph(navController: NavHostController) {
     val context = LocalContext.current
     val database = PawVetDatabase.getDatabase(context)
-    val mascotaRepo = MascotaRepository(database.mascotaDao())
-    val citaRepo = CitaRepository(database.citaDao())
+    val firestore = FirebaseFirestore.getInstance()
+    val firebaseAuth = FirebaseAuth.getInstance()
+    val notificationHelper = NotificationHelper(context)
+    
+    // Repositorios con dependencias de Firebase
+    val authRepo = AuthRepository(firebaseAuth)
+    val mascotaRepo = MascotaRepository(database.mascotaDao(), firestore, firebaseAuth)
+    val citaRepo = CitaRepository(database.citaDao(), firestore, firebaseAuth)
     val servicioRepo = ServicioRepository(database.servicioDao())
     val breedsRepo = BreedsRepository(RetrofitClient.dogApiService)
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Home.route
-    ) {
-        // 1. DASHBOARD
+    val authViewModel: AuthViewModel = viewModel(factory = ViewModelFactory(authRepo))
+    val authState by authViewModel.uiState.collectAsState()
+
+    val startDest = if (authState.usuario != null) Screen.Home.route else Screen.Login.route
+
+    NavHost(navController = navController, startDestination = startDest) {
+        composable(Screen.Login.route) {
+            LoginScreen(
+                viewModel = authViewModel,
+                onLoginSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onRegisterClick = { navController.navigate(Screen.Register.route) }
+            )
+        }
+
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                viewModel = authViewModel,
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                },
+                onBackToLogin = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Home.route) {
             HomeScreen(
                 onCitasClick = { navController.navigate(Screen.CitaForm.createRoute(0)) },
@@ -56,76 +91,63 @@ fun PawVetNavGraph(navController: NavHostController) {
             )
         }
 
-        // 2. PERFIL / LISTA (CRUD)
         composable(Screen.Perfil.route) {
-            val mascotaVm: MascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo))
-            val citaVm: CitaViewModel = viewModel(factory = ViewModelFactory(citaRepo))
-
             PerfilScreen(
-                mascotaViewModel = mascotaVm,
-                citaViewModel = citaVm,
+                authViewModel = authViewModel,
+                mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)),
+                citaViewModel = viewModel(factory = ViewModelFactory(citaRepo, notificationHelper)),
+                onLogout = {
+                    authViewModel.cerrarSesion()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
                 onBack = { navController.popBackStack() },
-                onMascotaClick = { id: Int -> navController.navigate(Screen.MascotaDetalle.createRoute(id)) },
+                onMascotaClick = { id -> navController.navigate(Screen.MascotaDetalle.createRoute(id)) },
                 onAddMascotaClick = { navController.navigate(Screen.MascotaForm.createRoute(0)) },
-                onEditMascotaClick = { id: Int -> navController.navigate(Screen.MascotaForm.createRoute(id)) },
-                onEditCitaClick = { id: Int -> navController.navigate(Screen.CitaForm.createRoute(id)) }
+                onEditMascotaClick = { id -> navController.navigate(Screen.MascotaForm.createRoute(id)) },
+                onEditCitaClick = { id -> navController.navigate(Screen.CitaForm.createRoute(id)) }
             )
         }
 
-        // 3. DETALLE MASCOTA
-        composable(
-            route = Screen.MascotaDetalle.route,
-            arguments = listOf(navArgument("mascotaId") { type = NavType.IntType })
-        ) { backStackEntry ->
+        composable(Screen.MascotaDetalle.route, arguments = listOf(navArgument("mascotaId") { type = NavType.IntType })) { backStackEntry ->
             val id = backStackEntry.arguments?.getInt("mascotaId") ?: 0
-            val viewModel: MascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo))
             MascotaDetalleScreen(
                 mascotaId = id,
-                viewModel = viewModel,
+                viewModel = viewModel(factory = ViewModelFactory(mascotaRepo)),
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // 4. FORMULARIOS
-        composable(
-            route = Screen.MascotaForm.route,
-            arguments = listOf(navArgument("mascotaId") { type = NavType.IntType })
-        ) { backStackEntry ->
+        composable(Screen.MascotaForm.route, arguments = listOf(navArgument("mascotaId") { type = NavType.IntType })) { backStackEntry ->
             val id = backStackEntry.arguments?.getInt("mascotaId") ?: 0
-            val viewModel: MascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo))
-            MascotaFormScreen(mascotaId = id, viewModel = viewModel, onBack = { navController.popBackStack() })
-        }
-
-        composable(
-            route = Screen.CitaForm.route,
-            arguments = listOf(navArgument("citaId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("citaId") ?: 0
-            val citaVm: CitaViewModel = viewModel(factory = ViewModelFactory(citaRepo))
-            val mascotaVm: MascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo))
-            CitaFormScreen(citaId = id, citaViewModel = citaVm, mascotaViewModel = mascotaVm, onBack = { navController.popBackStack() })
-        }
-
-        // 5. SERVICIOS (ESTÉTICA)
-        composable(Screen.Servicios.route) {
-            val viewModel: BreedsViewModel = viewModel(factory = ViewModelFactory(breedsRepo))
-            ServiciosScreen(
-                viewModel = viewModel,
-                onNavigateToForm = { navController.navigate(Screen.ServicioForm.route) },
+            MascotaFormScreen(
+                mascotaId = id,
+                viewModel = viewModel(factory = ViewModelFactory(mascotaRepo)),
                 onBack = { navController.popBackStack() }
             )
+        }
+
+        composable(Screen.CitaForm.route, arguments = listOf(navArgument("citaId") { type = NavType.IntType })) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("citaId") ?: 0
+            CitaFormScreen(
+                citaId = id,
+                citaViewModel = viewModel(factory = ViewModelFactory(citaRepo, notificationHelper)),
+                mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)),
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Servicios.route) {
+            ServiciosScreen(viewModel = viewModel(factory = ViewModelFactory(breedsRepo)), onNavigateToForm = { navController.navigate(Screen.ServicioForm.route) }, onBack = { navController.popBackStack() })
         }
 
         composable(Screen.ServicioForm.route) {
-            val sViewModel: ServicioViewModel = viewModel(factory = ViewModelFactory(servicioRepo))
-            val mViewModel: MascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo))
-            ServicioFormScreen(viewModel = sViewModel, mascotaViewModel = mViewModel, onBack = { navController.popBackStack() })
+            ServicioFormScreen(viewModel = viewModel(factory = ViewModelFactory(servicioRepo)), mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)), onBack = { navController.popBackStack() })
         }
 
-        // 6. ASISTENTE (API RETROFIT)
         composable(Screen.ConsultasRapidas.route) {
-            val viewModel: BreedsViewModel = viewModel(factory = ViewModelFactory(breedsRepo))
-            ConsultasRapidasScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            ConsultasRapidasScreen(viewModel = viewModel(factory = ViewModelFactory(breedsRepo)), onBack = { navController.popBackStack() })
         }
     }
 }
