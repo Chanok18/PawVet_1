@@ -1,6 +1,8 @@
 package com.example.pawvet_1.ui.screens.perfil
 
 import androidx.compose.foundation.background
+import com.example.pawvet_1.data.model.Servicio
+import com.example.pawvet_1.ui.viewmodel.ServicioViewModel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +36,7 @@ fun PerfilScreen(
     authViewModel: AuthViewModel,
     mascotaViewModel: MascotaViewModel,
     citaViewModel: CitaViewModel,
+    servicioViewModel: ServicioViewModel,
     onLogout: () -> Unit,
     onBack: () -> Unit,
     onMascotaClick: (Int) -> Unit,
@@ -44,6 +47,7 @@ fun PerfilScreen(
     val authState by authViewModel.uiState.collectAsState()
     val mascotaState by mascotaViewModel.uiState.collectAsState()
     val citaState by citaViewModel.uiState.collectAsState()
+    val servicioState by servicioViewModel.uiState.collectAsState()
 
     // Sincronizar datos cuando el usuario esté disponible
     LaunchedEffect(authState.usuario) {
@@ -116,6 +120,22 @@ fun PerfilScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // 2. SECCIÓN: CITAS (CRUD)
+            Spacer(modifier = Modifier.height(24.dp))
+
+            SectionHeader(title = "Próximas citas esteticas ✂️")
+
+            if (servicioState.listaServicios.isEmpty()) {
+                Text("Sin servicios programados", color = Color.Gray)
+            } else {
+                servicioState.listaServicios.forEach { servicio ->
+                    ServicioItem(
+                        servicio = servicio,
+                        onDelete = {
+                            servicioViewModel.eliminarServicio(servicio)
+                        }
+                    )
+                }
+            }
             SectionHeader(title = "Próximas Citas 📅")
             if (citaState.listaCitas.isEmpty()) {
                 Text("Sin citas pendientes", color = Color.Gray)
@@ -186,6 +206,55 @@ fun CitaItem(cita: Cita, onEdit: () -> Unit, onDelete: () -> Unit) {
             }
             IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp)) }
             IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error) }
+        }
+    }
+}
+@Composable
+fun ServicioItem(
+    servicio: Servicio,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Icon(
+                Icons.Default.Star,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = servicio.tipoServicio,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = servicio.fecha,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

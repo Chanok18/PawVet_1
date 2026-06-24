@@ -53,8 +53,18 @@ class CitaRepository(
     suspend fun sincronizarDesdeFirestore() {
         val uid = userId
         if (uid.isEmpty()) return
-        val snapshot = firestore.collection("usuarios").document(uid).collection("citas").get().await()
+
+        val snapshot = firestore
+            .collection("usuarios")
+            .document(uid)
+            .collection("citas")
+            .get()
+            .await()
+
         val listaFirestore = snapshot.toObjects(Cita::class.java)
+
+        citaDao.deleteCitasByUser(uid)
+
         for (cita in listaFirestore) {
             citaDao.insertCita(cita)
         }

@@ -16,6 +16,7 @@ import com.example.pawvet_1.ui.viewmodel.ServicioViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -25,11 +26,15 @@ fun ServicioFormScreen(
     onBack: () -> Unit
 ) {
     val mascotaState by mascotaViewModel.uiState.collectAsState()
+    LaunchedEffect(Unit) {
+        mascotaViewModel.listarMascotas()
+    }
 
     // Estados del formulario
     var selectedMascotaId by remember { mutableStateOf<Int?>(null) }
     var selectedTipo by remember { mutableStateOf("Baño y Corte") }
     var selectedFechaMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var selectedHora by remember { mutableStateOf("09:00 AM") }
 
     // Control de diálogos y menús
     var showDatePicker by remember { mutableStateOf(false) }
@@ -37,6 +42,14 @@ fun ServicioFormScreen(
     var expandedTipos by remember { mutableStateOf(false) }
 
     val tiposServicio = listOf("Baño y Corte", "Limpieza Dental", "Corte de Uñas", "Baño Medicado", "Spa Completo")
+    val horarios = listOf(
+        "09:00 AM",
+        "10:00 AM",
+        "11:00 AM",
+        "03:00 PM",
+        "04:00 PM",
+        "05:00 PM"
+    )
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     Scaffold(
@@ -186,6 +199,38 @@ fun ServicioFormScreen(
                     }
                 }
             }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+
+                    Text(
+                        "Horario",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+
+                        horarios.forEach { hora ->
+
+                            FilterChip(
+                                selected = selectedHora == hora,
+                                onClick = {
+                                    selectedHora = hora
+                                },
+                                label = {
+                                    Text(hora)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -196,13 +241,17 @@ fun ServicioFormScreen(
                         viewModel.guardarServicio(
                             mascotaId = idMascota,
                             tipo = selectedTipo,
-                            fecha = dateFormatter.format(Date(selectedFechaMillis))
+                            fecha = dateFormatter.format(Date(selectedFechaMillis)),
+                            hora = selectedHora
                         )
                         onBack()
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                enabled = selectedMascotaId != null && selectedTipo.isNotBlank(),
+                enabled =
+                    selectedMascotaId != null &&
+                            selectedTipo.isNotBlank() &&
+                            selectedHora.isNotBlank(),
                 shape = MaterialTheme.shapes.large
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
@@ -219,7 +268,10 @@ fun ServicioFormScreen(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    selectedFechaMillis = datePickerState.selectedDateMillis ?: selectedFechaMillis
+                    datePickerState.selectedDateMillis?.let {
+                        selectedFechaMillis =
+                            it + TimeZone.getDefault().getOffset(it)
+                    }
                     showDatePicker = false
                 }) { Text("Confirmar") }
             },

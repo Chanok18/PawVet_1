@@ -51,6 +51,8 @@ fun PawVetNavGraph(navController: NavHostController) {
     val citaRepo = CitaRepository(database.citaDao(), firestore, firebaseAuth)
     val servicioRepo = ServicioRepository(database.servicioDao())
     val breedsRepo = BreedsRepository(RetrofitClient.dogApiService)
+    val servicioViewModel: ServicioViewModel =
+        viewModel(factory = ViewModelFactory(servicioRepo))
 
     val authViewModel: AuthViewModel = viewModel(factory = ViewModelFactory(authRepo))
     val authState by authViewModel.uiState.collectAsState()
@@ -96,6 +98,7 @@ fun PawVetNavGraph(navController: NavHostController) {
                 authViewModel = authViewModel,
                 mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)),
                 citaViewModel = viewModel(factory = ViewModelFactory(citaRepo, notificationHelper)),
+                servicioViewModel = servicioViewModel,
                 onLogout = {
                     authViewModel.cerrarSesion()
                     navController.navigate(Screen.Login.route) {
@@ -103,10 +106,18 @@ fun PawVetNavGraph(navController: NavHostController) {
                     }
                 },
                 onBack = { navController.popBackStack() },
-                onMascotaClick = { id -> navController.navigate(Screen.MascotaDetalle.createRoute(id)) },
-                onAddMascotaClick = { navController.navigate(Screen.MascotaForm.createRoute(0)) },
-                onEditMascotaClick = { id -> navController.navigate(Screen.MascotaForm.createRoute(id)) },
-                onEditCitaClick = { id -> navController.navigate(Screen.CitaForm.createRoute(id)) }
+                onMascotaClick = { id ->
+                    navController.navigate(Screen.MascotaDetalle.createRoute(id))
+                },
+                onAddMascotaClick = {
+                    navController.navigate(Screen.MascotaForm.createRoute(0))
+                },
+                onEditMascotaClick = { id ->
+                    navController.navigate(Screen.MascotaForm.createRoute(id))
+                },
+                onEditCitaClick = { id ->
+                    navController.navigate(Screen.CitaForm.createRoute(id))
+                }
             )
         }
 

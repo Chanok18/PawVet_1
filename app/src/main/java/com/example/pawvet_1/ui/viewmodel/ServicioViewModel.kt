@@ -38,9 +38,9 @@ class ServicioViewModel(private val repository: ServicioRepository) : ViewModel(
         }
     }
 
-    fun guardarServicio(id: Int = 0, mascotaId: Int, tipo: String, fecha: String) {
+    fun guardarServicio(id: Int = 0, mascotaId: Int, tipo: String, fecha: String, hora: String) {
         viewModelScope.launch {
-            val servicio = Servicio(id = id, mascotaId = mascotaId, tipoServicio = tipo, fecha = fecha)
+            val servicio = Servicio(id = id, mascotaId = mascotaId, tipoServicio = tipo, fecha = fecha, hora = hora)
             if (id == 0) {
                 repository.insertServicio(servicio)
             } else {

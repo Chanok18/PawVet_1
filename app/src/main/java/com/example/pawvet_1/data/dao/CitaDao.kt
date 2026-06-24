@@ -20,4 +20,7 @@ interface CitaDao {
 
     @Delete
     suspend fun deleteCita(cita: Cita)
+
+    @Query("DELETE FROM citas WHERE usuarioId = :usuarioId")
+    suspend fun deleteCitasByUser(usuarioId: String)
 }

@@ -52,19 +52,33 @@ class CitaViewModel(
         _uiState.update { it.copy(citaSeleccionada = null) }
     }
 
-    fun guardarCita(id: Int = 0, mascotaId: Int, fecha: String, hora: String, tipo: String) {
+    fun guardarCita(
+        id: Int = 0,
+        mascotaId: Int,
+        fecha: String,
+        hora: String,
+        tipo: String
+    ) {
         viewModelScope.launch {
+
+            val citaActual = _uiState.value.citaSeleccionada
+
             val cita = Cita(
-                id = id, 
-                mascotaId = mascotaId, 
-                fecha = fecha, 
-                hora = hora, 
+                id = id,
+                mascotaId = mascotaId,
+                fecha = fecha,
+                hora = hora,
                 tipo = tipo,
-                idFirestore = _uiState.value.citaSeleccionada?.idFirestore ?: ""
+                usuarioId = citaActual?.usuarioId ?: "",
+                idFirestore = citaActual?.idFirestore ?: ""
             )
 
-            if (id == 0) repository.insertCita(cita) else repository.updateCita(cita)
-            
+            if (id == 0) {
+                repository.insertCita(cita)
+            } else {
+                repository.updateCita(cita)
+            }
+
             notificationHelper.programarRecordatorio(
                 citaId = if (id == 0) System.currentTimeMillis().toInt() else id,
                 fecha = fecha,

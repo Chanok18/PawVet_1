@@ -13,7 +13,7 @@ import com.example.pawvet_1.data.model.Servicio
 
 @Database(
     entities = [Mascota::class, Cita::class, Servicio::class], 
-    version = 5, // Incrementamos a 5 para las nuevas columnas de Firebase
+    version = 6, // Incrementamos a 5 para las nuevas columnas de Firebase
     exportSchema = false
 )
 abstract class PawVetDatabase : RoomDatabase() {

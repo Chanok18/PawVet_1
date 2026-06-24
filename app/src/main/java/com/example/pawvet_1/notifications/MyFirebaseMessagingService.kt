@@ -28,7 +28,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // Aquí podrías enviar el token a tu servidor/Firestore si fuera necesario
+
+        android.util.Log.d("FCM_TOKEN", token)
     }
 
     private fun mostrarNotificacionLocal(titulo: String, mensaje: String) {

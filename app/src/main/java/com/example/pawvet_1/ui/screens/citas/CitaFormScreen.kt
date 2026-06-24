@@ -16,6 +16,9 @@ import com.example.pawvet_1.ui.viewmodel.CitaViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.compose.material3.DatePickerDefaults.dateFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -27,6 +30,7 @@ fun CitaFormScreen(
 ) {
     val uiState by citaViewModel.uiState.collectAsState()
     val mascotaState by mascotaViewModel.uiState.collectAsState()
+
     LaunchedEffect(Unit) {
         mascotaViewModel.listarMascotas()
     }
@@ -42,10 +46,32 @@ fun CitaFormScreen(
     var expandedMascotas by remember { mutableStateOf(false) }
     var expandedMotivos by remember { mutableStateOf(false) }
 
-    val motivos = listOf("Consulta General", "Vacunación", "Desparasitación", "Emergencia", "Control Médico", "Otro")
-    val horarios = listOf("09:00 AM", "10:00 AM", "11:00 AM", "03:00 PM", "04:00 PM", "05:00 PM")
+    val motivos = listOf(
+        "Consulta General",
+        "Vacunación",
+        "Desparasitación",
+        "Emergencia",
+        "Control Médico",
+        "Otro"
+    )
+
+    val horarios = listOf(
+        "09:00 AM",
+        "10:00 AM",
+        "11:00 AM",
+        "03:00 PM",
+        "04:00 PM",
+        "05:00 PM"
+    )
 
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    val fechaActualSeleccionada =
+        dateFormatter.format(Date(selectedFechaMillis))
+
+    val horariosOcupados = uiState.listaCitas
+        .filter { it.fecha == fechaActualSeleccionada }
+        .map { it.hora }
 
     // Cargar datos en caso de edición
     LaunchedEffect(citaId) {
@@ -223,12 +249,31 @@ fun CitaFormScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         horarios.forEach { hora ->
+                            val ocupado = horariosOcupados.contains(hora)
                             FilterChip(
                                 selected = selectedHora == hora,
-                                onClick = { selectedHora = hora },
-                                label = { Text(hora) },
+                                onClick = {
+                                    if (!ocupado) {
+                                        selectedHora = hora
+                                    }
+                                },
+                                enabled = !ocupado,
+                                label = {
+                                    Text(
+                                        if (ocupado)
+                                            "$hora (Ocupado)"
+                                        else
+                                            hora
+                                    )
+                                },
                                 leadingIcon = if (selectedHora == hora) {
-                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                    {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 } else null
                             )
                         }
@@ -239,9 +284,38 @@ fun CitaFormScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Botón de Acción
+            val context = LocalContext.current
             Button(
                 onClick = {
                     selectedMascotaId?.let { idMascota ->
+
+                        val ahora = Calendar.getInstance()
+
+                        val calendarioCita = Calendar.getInstance()
+                        calendarioCita.timeInMillis = selectedFechaMillis
+
+                        val hora24 = when (selectedHora) {
+                            "09:00 AM" -> 9
+                            "10:00 AM" -> 10
+                            "11:00 AM" -> 11
+                            "03:00 PM" -> 15
+                            "04:00 PM" -> 16
+                            "05:00 PM" -> 17
+                            else -> 0
+                        }
+
+                        calendarioCita.set(Calendar.HOUR_OF_DAY, hora24)
+                        calendarioCita.set(Calendar.MINUTE, 0)
+
+                        if (calendarioCita.before(ahora)) {
+                            Toast.makeText(
+                                context,
+                                "No puedes registrar citas en fechas u horas pasadas",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+
                         citaViewModel.guardarCita(
                             id = citaId,
                             mascotaId = idMascota,
@@ -249,6 +323,7 @@ fun CitaFormScreen(
                             hora = selectedHora,
                             tipo = selectedMotivo
                         )
+
                         onBack()
                     }
                 },
@@ -266,12 +341,17 @@ fun CitaFormScreen(
 
     // Diálogo del DatePicker
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedFechaMillis)
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedFechaMillis
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    selectedFechaMillis = datePickerState.selectedDateMillis ?: selectedFechaMillis
+                    datePickerState.selectedDateMillis?.let {
+                        val zonaLocal = TimeZone.getDefault()
+                        selectedFechaMillis = it + zonaLocal.getOffset(it)
+                    }
                     showDatePicker = false
                 }) { Text("Confirmar") }
             },

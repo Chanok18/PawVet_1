@@ -27,16 +27,22 @@ class NotificationHelper(private val context: Context) {
         )
 
         // Convertir fecha y hora a milisegundos
-        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        val fechaCita = sdf.parse("$fecha $hora")
+        val sdf = SimpleDateFormat(
+            "dd/MM/yyyy hh:mm a",
+            Locale.getDefault()
+        )
+        try {
+            val fechaCita = sdf.parse("$fecha $hora")
 
-        fechaCita?.let {
-            // Programamos la alarma (puedes restarle tiempo si quieres que suene antes)
-            alarmManager.set(
-                AlarmManager.RTC_WAKEUP,
-                it.time,
-                pendingIntent
-            )
+            fechaCita?.let {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    it.time,
+                    pendingIntent
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

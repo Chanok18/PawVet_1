@@ -10,5 +10,6 @@ data class Servicio(
     val id: Int = 0,
     val mascotaId: Int,
     val tipoServicio: String,
-    val fecha: String
+    val fecha: String,
+    val hora: String
 )
