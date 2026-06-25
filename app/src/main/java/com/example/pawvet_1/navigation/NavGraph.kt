@@ -10,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.pawvet_1.PawVetApplication
 import com.example.pawvet_1.data.PawVetDatabase
 import com.example.pawvet_1.data.remote.RetrofitClient
 import com.example.pawvet_1.data.repository.AuthRepository
@@ -33,6 +34,7 @@ import com.example.pawvet_1.ui.viewmodel.CitaViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 import com.example.pawvet_1.ui.viewmodel.ServicioViewModel
 import com.example.pawvet_1.ui.viewmodel.ViewModelFactory
+import com.example.pawvet_1.ui.AppViewModelProvider
 import com.example.pawvet_1.notifications.NotificationHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -45,15 +47,13 @@ fun PawVetNavGraph(navController: NavHostController) {
     val firebaseAuth = FirebaseAuth.getInstance()
     val notificationHelper = NotificationHelper(context)
     
-    // Repositorios con dependencias de Firebase
+    // Repositorios
     val authRepo = AuthRepository(firebaseAuth)
     val mascotaRepo = MascotaRepository(database.mascotaDao(), firestore, firebaseAuth)
     val citaRepo = CitaRepository(database.citaDao(), firestore, firebaseAuth)
     val servicioRepo = ServicioRepository(database.servicioDao())
     val breedsRepo = BreedsRepository(RetrofitClient.dogApiService)
-    val servicioViewModel: ServicioViewModel =
-        viewModel(factory = ViewModelFactory(servicioRepo))
-
+    
     val authViewModel: AuthViewModel = viewModel(factory = ViewModelFactory(authRepo))
     val authState by authViewModel.uiState.collectAsState()
 
@@ -77,7 +77,7 @@ fun PawVetNavGraph(navController: NavHostController) {
                 viewModel = authViewModel,
                 onRegisterSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
                 onBackToLogin = { navController.popBackStack() }
@@ -97,8 +97,11 @@ fun PawVetNavGraph(navController: NavHostController) {
             PerfilScreen(
                 authViewModel = authViewModel,
                 mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)),
-                citaViewModel = viewModel(factory = ViewModelFactory(citaRepo, notificationHelper)),
-                servicioViewModel = servicioViewModel,
+                citaViewModel = viewModel(factory = ViewModelFactory(
+                    repository = citaRepo,
+                    notificationHelper = notificationHelper
+                )),
+                servicioViewModel = viewModel(factory = ViewModelFactory(servicioRepo)),
                 onLogout = {
                     authViewModel.cerrarSesion()
                     navController.navigate(Screen.Login.route) {
@@ -106,18 +109,10 @@ fun PawVetNavGraph(navController: NavHostController) {
                     }
                 },
                 onBack = { navController.popBackStack() },
-                onMascotaClick = { id ->
-                    navController.navigate(Screen.MascotaDetalle.createRoute(id))
-                },
-                onAddMascotaClick = {
-                    navController.navigate(Screen.MascotaForm.createRoute(0))
-                },
-                onEditMascotaClick = { id ->
-                    navController.navigate(Screen.MascotaForm.createRoute(id))
-                },
-                onEditCitaClick = { id ->
-                    navController.navigate(Screen.CitaForm.createRoute(id))
-                }
+                onMascotaClick = { id -> navController.navigate(Screen.MascotaDetalle.createRoute(id)) },
+                onAddMascotaClick = { navController.navigate(Screen.MascotaForm.createRoute(0)) },
+                onEditMascotaClick = { id -> navController.navigate(Screen.MascotaForm.createRoute(id)) },
+                onEditCitaClick = { id -> navController.navigate(Screen.CitaForm.createRoute(id)) }
             )
         }
 
@@ -143,22 +138,36 @@ fun PawVetNavGraph(navController: NavHostController) {
             val id = backStackEntry.arguments?.getInt("citaId") ?: 0
             CitaFormScreen(
                 citaId = id,
-                citaViewModel = viewModel(factory = ViewModelFactory(citaRepo, notificationHelper)),
+                citaViewModel = viewModel(factory = ViewModelFactory(
+                    repository = citaRepo,
+                    notificationHelper = notificationHelper
+                )),
                 mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)),
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.Servicios.route) {
-            ServiciosScreen(viewModel = viewModel(factory = ViewModelFactory(breedsRepo)), onNavigateToForm = { navController.navigate(Screen.ServicioForm.route) }, onBack = { navController.popBackStack() })
+            ServiciosScreen(
+                viewModel = viewModel(factory = ViewModelFactory(breedsRepo)), 
+                onNavigateToForm = { navController.navigate(Screen.ServicioForm.route) }, 
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.ServicioForm.route) {
-            ServicioFormScreen(viewModel = viewModel(factory = ViewModelFactory(servicioRepo)), mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)), onBack = { navController.popBackStack() })
+            ServicioFormScreen(
+                viewModel = viewModel(factory = ViewModelFactory(servicioRepo)), 
+                mascotaViewModel = viewModel(factory = ViewModelFactory(mascotaRepo)), 
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.ConsultasRapidas.route) {
-            ConsultasRapidasScreen(viewModel = viewModel(factory = ViewModelFactory(breedsRepo)), onBack = { navController.popBackStack() })
+            ConsultasRapidasScreen(
+                viewModel = viewModel(factory = AppViewModelProvider.Factory), 
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

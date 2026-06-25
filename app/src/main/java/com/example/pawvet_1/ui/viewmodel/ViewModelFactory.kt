@@ -11,6 +11,7 @@ import com.example.pawvet_1.notifications.NotificationHelper
  */
 class ViewModelFactory(
     private val repository: Any,
+    private val extraRepository: Any? = null,
     private val notificationHelper: NotificationHelper? = null
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -26,10 +27,14 @@ class ViewModelFactory(
                 BreedsViewModel(repository as BreedsRepository) as T
             }
             modelClass.isAssignableFrom(CitaViewModel::class.java) -> {
+                println("DEBUG notificationHelper = $notificationHelper")
                 CitaViewModel(repository as CitaRepository, notificationHelper!!) as T
             }
             modelClass.isAssignableFrom(ServicioViewModel::class.java) -> {
                 ServicioViewModel(repository as ServicioRepository) as T
+            }
+            modelClass.isAssignableFrom(ConsultaIaViewModel::class.java) -> {
+                ConsultaIaViewModel(repository as MascotaRepository, extraRepository as GeminiRepository) as T
             }
             else -> throw IllegalArgumentException("Clase ViewModel desconocida: ${modelClass.name}")
         }

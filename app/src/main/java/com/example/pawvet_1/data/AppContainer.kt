@@ -1,10 +1,12 @@
 package com.example.pawvet_1.data
 
 import android.content.Context
+import com.example.pawvet_1.data.remote.GeminiRetrofitClient
 import com.example.pawvet_1.data.remote.RetrofitClient
 import com.example.pawvet_1.data.repository.AuthRepository
 import com.example.pawvet_1.data.repository.BreedsRepository
 import com.example.pawvet_1.data.repository.CitaRepository
+import com.example.pawvet_1.data.repository.GeminiRepository
 import com.example.pawvet_1.data.repository.MascotaRepository
 import com.example.pawvet_1.data.repository.ServicioRepository
 import com.example.pawvet_1.notifications.NotificationHelper
@@ -21,6 +23,7 @@ interface AppContainer {
     val citaRepository: CitaRepository
     val servicioRepository: ServicioRepository
     val notificationHelper: NotificationHelper
+    val geminiRepository: GeminiRepository
 }
 
 class AppDataContainer(private val context: Context) : AppContainer {
@@ -55,5 +58,9 @@ class AppDataContainer(private val context: Context) : AppContainer {
     // Nuevo: Helper para notificaciones
     override val notificationHelper: NotificationHelper by lazy {
         NotificationHelper(context)
+    }
+
+    override val geminiRepository: GeminiRepository by lazy {
+        GeminiRepository(GeminiRetrofitClient.geminiApiService)
     }
 }

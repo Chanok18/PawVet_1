@@ -7,10 +7,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,27 +18,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pawvet_1.data.model.Mascota
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
-import com.example.pawvet_1.ui.viewmodel.BreedsViewModel
+import com.example.pawvet_1.ui.viewmodel.ConsultaIaViewModel
 
 @Composable
 fun ConsultasRapidasScreen(
-    viewModel: BreedsViewModel,
+    viewModel: ConsultaIaViewModel,
     onBack: () -> Unit
 ) {
-    // Por ahora mantenemos el viewModel para no romper referencias, 
-    // aunque estamos transformando la UI a un modelo de chat estático.
-    
+    val uiState = viewModel.uiState
+    val mascotas by viewModel.mascotas.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+
     PawVetBaseScreen(
-        title = "Asistente Virtual",
+        title = "Asistente Virtual IA",
         onBack = onBack
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             // 1. Header del Asistente
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 20.dp),
+                    .padding(bottom = 16.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primary
@@ -74,62 +76,105 @@ fun ConsultasRapidasScreen(
                 }
             }
 
-            // 2. Área de Contenido (Modelo de Chat)
-            Box(modifier = Modifier.weight(1f)) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+            // 1. Dropdown para seleccionar mascota
+            Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                OutlinedCard(
+                    onClick = { expanded = true },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    item {
-                        ChatBubble(
-                            message = "¡Hola! Soy PawBot. 🐾\n¿En qué puedo ayudarte con tu mascota hoy? Puedo darte consejos sobre alimentación, cuidados básicos o comportamiento.",
-                            isUser = false
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = viewModel.mascotaSeleccionada?.nombre ?: "Seleccionar Mascota",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                    }
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    mascotas.forEach { mascota ->
+                        DropdownMenuItem(
+                            text = { Text("${mascota.nombre} (${mascota.tipo})") },
+                            onClick = {
+                                viewModel.onMascotaSelected(mascota)
+                                expanded = false
+                            }
+                        )
+                    }
+                    if (mascotas.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("No hay mascotas registradas") },
+                            onClick = { expanded = false },
+                            enabled = false
                         )
                     }
                 }
             }
 
-            // 3. Barra de Chat "IA Ready"
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                tonalElevation = 2.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Info, 
-                        contentDescription = null, 
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Pregunta algo sobre tu mascota...",
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                    IconButton(
-                        onClick = { /* Futura integración con IA */ },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+            // 2. Área de Contenido (Respuesta IA)
+            Box(modifier = Modifier.weight(1f)) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (uiState.respuesta.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Send, 
-                            contentDescription = "Enviar", 
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
+                        item {
+                            ChatBubble(
+                                message = uiState.respuesta,
+                                isUser = false
+                            )
+                        }
+                    }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = uiState.error ?: "Selecciona una mascota y escribe tu consulta",
+                            color = if (uiState.error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
             }
+
+            // 3. Barra de Chat
+            OutlinedTextField(
+                value = viewModel.consultaTexto,
+                onValueChange = { viewModel.onConsultaChange(it) },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                placeholder = { Text("Escribe tu consulta aquí...") },
+                shape = RoundedCornerShape(24.dp),
+                trailingIcon = {
+                    IconButton(
+                        onClick = { viewModel.consultarIA() },
+                        enabled = !uiState.isLoading && viewModel.consultaTexto.isNotBlank() && viewModel.mascotaSeleccionada != null,
+                        modifier = Modifier
+                            .background(
+                                if (viewModel.consultaTexto.isNotBlank() && viewModel.mascotaSeleccionada != null) 
+                                    MaterialTheme.colorScheme.primary 
+                                else 
+                                    MaterialTheme.colorScheme.surfaceVariant, 
+                                CircleShape
+                            )
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Consultar IA",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            )
         }
     }
 }

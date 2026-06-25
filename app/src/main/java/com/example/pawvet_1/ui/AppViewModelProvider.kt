@@ -8,6 +8,7 @@ import com.example.pawvet_1.PawVetApplication
 import com.example.pawvet_1.ui.viewmodel.AuthViewModel
 import com.example.pawvet_1.ui.viewmodel.BreedsViewModel
 import com.example.pawvet_1.ui.viewmodel.CitaViewModel
+import com.example.pawvet_1.ui.viewmodel.ConsultaIaViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 import com.example.pawvet_1.ui.viewmodel.ServicioViewModel
 
@@ -37,6 +38,14 @@ object AppViewModelProvider {
 
         initializer {
             ServicioViewModel(pawVetApplication().container.servicioRepository)
+        }
+
+        // Nuevo: ViewModel para el Asistente Veterinario IA
+        initializer {
+            ConsultaIaViewModel(
+                pawVetApplication().container.mascotaRepository,
+                pawVetApplication().container.geminiRepository
+            )
         }
     }
 }
