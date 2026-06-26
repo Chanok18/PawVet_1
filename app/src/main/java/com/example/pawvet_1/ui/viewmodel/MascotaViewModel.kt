@@ -27,6 +27,7 @@ class MascotaViewModel(private val repository: MascotaRepository) : ViewModel() 
 
     init {
         listarMascotas()
+        refreshFromCloud()
     }
 
     private fun listarMascotas() {
@@ -71,6 +72,12 @@ class MascotaViewModel(private val repository: MascotaRepository) : ViewModel() 
     fun eliminarMascota(mascota: Mascota) {
         viewModelScope.launch {
             repository.deleteMascota(mascota)
+        }
+    }
+
+    fun refreshFromCloud() {
+        viewModelScope.launch {
+            runCatching { repository.refreshFromCloud() }
         }
     }
 }

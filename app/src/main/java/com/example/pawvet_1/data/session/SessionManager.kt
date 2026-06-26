@@ -1,14 +1,22 @@
 package com.example.pawvet_1.data.session
 
-import android.content.Context
+import com.example.pawvet_1.data.firebase.FcmTokenSyncManager
+import com.example.pawvet_1.data.firebase.UserProfileRemoteDataSource
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class SessionState(
     val isLoggedIn: Boolean = false,
+    val uid: String = "",
     val userName: String = "",
     val userEmail: String = ""
 )
@@ -18,114 +26,102 @@ data class AuthResult(
     val message: String
 )
 
-class SessionManager(context: Context) {
-
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val _sessionState = MutableStateFlow(loadSession())
+class SessionManager(
+    private val auth: FirebaseAuth,
+    private val userProfileRemoteDataSource: UserProfileRemoteDataSource,
+    private val fcmTokenSyncManager: FcmTokenSyncManager
+) {
+    private val _sessionState = MutableStateFlow(SessionState())
     val sessionState: StateFlow<SessionState> = _sessionState.asStateFlow()
+    private val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    fun register(name: String, email: String, password: String): AuthResult {
+    suspend fun restoreSession() {
+        val user = auth.currentUser
+        if (user == null) {
+            _sessionState.value = SessionState()
+            return
+        }
+        _sessionState.value = buildSessionState(user.uid, user.email.orEmpty())
+        runCatching { fcmTokenSyncManager.syncCurrentTokenIfPossible() }
+    }
+
+    suspend fun register(name: String, email: String, password: String): AuthResult {
         val cleanName = name.trim()
-        val cleanEmail = email.trim().lowercase()
+        val cleanEmail = email.trim()
         val cleanPassword = password.trim()
 
         if (cleanName.isBlank() || cleanEmail.isBlank() || cleanPassword.isBlank()) {
             return AuthResult(false, "Completa todos los campos para crear tu cuenta.")
         }
 
-        val accounts = loadAccounts()
-        val alreadyExists = (0 until accounts.length()).any { index ->
-            accounts.getJSONObject(index).optString(KEY_EMAIL) == cleanEmail
-        }
-
-        if (alreadyExists) {
-            return AuthResult(false, "Ese correo ya está registrado. Inicia sesión.")
-        }
-
-        accounts.put(
-            JSONObject()
-                .put(KEY_NAME, cleanName)
-                .put(KEY_EMAIL, cleanEmail)
-                .put(KEY_PASSWORD, cleanPassword)
-        )
-        saveAccounts(accounts)
-        saveSession(cleanName, cleanEmail)
-        return AuthResult(true, "Cuenta creada correctamente.")
+        return runCatching {
+            val result = auth.createUserWithEmailAndPassword(cleanEmail, cleanPassword).await()
+            val uid = result.user?.uid ?: error("No se pudo crear el usuario")
+            userProfileRemoteDataSource.createOrUpdateProfile(uid, cleanName, cleanEmail)
+            _sessionState.value = SessionState(
+                isLoggedIn = true,
+                uid = uid,
+                userName = cleanName,
+                userEmail = cleanEmail
+            )
+            runCatching { fcmTokenSyncManager.syncCurrentTokenIfPossible() }
+            AuthResult(true, "Cuenta creada correctamente.")
+        }.getOrElse { AuthResult(false, mapAuthError(it)) }
     }
 
-    fun login(email: String, password: String): AuthResult {
-        val cleanEmail = email.trim().lowercase()
+    suspend fun login(email: String, password: String): AuthResult {
+        val cleanEmail = email.trim()
         val cleanPassword = password.trim()
 
         if (cleanEmail.isBlank() || cleanPassword.isBlank()) {
             return AuthResult(false, "Ingresa tu correo y contraseña.")
         }
 
-        val accounts = loadAccounts()
-        val account = (0 until accounts.length())
-            .map { accounts.getJSONObject(it) }
-            .firstOrNull {
-                it.optString(KEY_EMAIL) == cleanEmail &&
-                    it.optString(KEY_PASSWORD) == cleanPassword
-            }
-
-        return if (account != null) {
-            saveSession(
-                account.optString(KEY_NAME),
-                account.optString(KEY_EMAIL)
-            )
+        return runCatching {
+            val result = auth.signInWithEmailAndPassword(cleanEmail, cleanPassword).await()
+            val user = result.user ?: error("No se pudo iniciar sesión")
+            _sessionState.value = buildSessionState(user.uid, user.email.orEmpty())
+            runCatching { fcmTokenSyncManager.syncCurrentTokenIfPossible() }
             AuthResult(true, "Sesión iniciada.")
-        } else {
-            AuthResult(false, "Correo o contraseña incorrectos.")
-        }
+        }.getOrElse { AuthResult(false, mapAuthError(it)) }
     }
 
     fun logout() {
-        prefs.edit()
-            .remove(KEY_CURRENT_NAME)
-            .remove(KEY_CURRENT_EMAIL)
-            .apply()
+        val uid = _sessionState.value.uid.ifBlank { auth.currentUser?.uid.orEmpty() }
+        auth.signOut()
         _sessionState.value = SessionState()
+        if (uid.isNotBlank()) {
+            sessionScope.launch {
+                runCatching { userProfileRemoteDataSource.clearFcmToken(uid) }
+            }
+        }
     }
 
-    private fun saveSession(name: String, email: String) {
-        prefs.edit()
-            .putString(KEY_CURRENT_NAME, name)
-            .putString(KEY_CURRENT_EMAIL, email)
-            .apply()
-        _sessionState.value = SessionState(
-            isLoggedIn = true,
-            userName = name,
-            userEmail = email
-        )
-    }
-
-    private fun loadSession(): SessionState {
-        val name = prefs.getString(KEY_CURRENT_NAME, "").orEmpty()
-        val email = prefs.getString(KEY_CURRENT_EMAIL, "").orEmpty()
+    private suspend fun buildSessionState(uid: String, fallbackEmail: String): SessionState {
+        val profile = userProfileRemoteDataSource.getProfile(uid)
         return SessionState(
-            isLoggedIn = name.isNotBlank() && email.isNotBlank(),
-            userName = name,
-            userEmail = email
+            isLoggedIn = true,
+            uid = uid,
+            userName = profile?.name.orEmpty().ifBlank { "Usuario PawVet" },
+            userEmail = profile?.email.orEmpty().ifBlank { fallbackEmail }
         )
     }
 
-    private fun loadAccounts(): JSONArray {
-        val raw = prefs.getString(KEY_ACCOUNTS, null) ?: return JSONArray()
-        return runCatching { JSONArray(raw) }.getOrElse { JSONArray() }
-    }
+    private fun mapAuthError(throwable: Throwable): String {
+        if (throwable is FirebaseNetworkException) {
+            return "No hay conexión a internet o Firebase no pudo responder. Verifica tu red."
+        }
 
-    private fun saveAccounts(accounts: JSONArray) {
-        prefs.edit().putString(KEY_ACCOUNTS, accounts.toString()).apply()
-    }
-
-    companion object {
-        private const val PREFS_NAME = "pawvet_session"
-        private const val KEY_ACCOUNTS = "accounts"
-        private const val KEY_CURRENT_NAME = "current_name"
-        private const val KEY_CURRENT_EMAIL = "current_email"
-        private const val KEY_NAME = "name"
-        private const val KEY_EMAIL = "email"
-        private const val KEY_PASSWORD = "password"
+        val code = (throwable as? FirebaseAuthException)?.errorCode.orEmpty()
+        return when (code) {
+            "ERROR_INVALID_EMAIL" -> "El correo ingresado no es válido."
+            "ERROR_INVALID_CREDENTIAL" -> "Las credenciales no son válidas."
+            "ERROR_WRONG_PASSWORD" -> "La contraseña es incorrecta."
+            "ERROR_USER_NOT_FOUND" -> "No existe una cuenta con ese correo."
+            "ERROR_EMAIL_ALREADY_IN_USE" -> "Ese correo ya está registrado."
+            "ERROR_WEAK_PASSWORD" -> "La contraseña debe tener al menos 6 caracteres."
+            "ERROR_NETWORK_REQUEST_FAILED" -> "No hay conexión a internet."
+            else -> throwable.message ?: "Ocurrió un error de autenticación."
+        }
     }
 }

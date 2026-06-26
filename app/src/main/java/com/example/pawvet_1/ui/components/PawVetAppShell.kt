@@ -1,5 +1,7 @@
 package com.example.pawvet_1.ui.components
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,10 +25,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,9 +49,11 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.pawvet_1.data.session.SessionManager
+import com.example.pawvet_1.PawVetApplication
+import com.example.pawvet_1.core.hasInternetConnection
 import com.example.pawvet_1.navigation.PawVetNavGraph
 import com.example.pawvet_1.navigation.Screen
+import com.example.pawvet_1.ui.notifications.NotificationHelper
 import com.example.pawvet_1.ui.screens.login.LoginScreen
 import com.example.pawvet_1.ui.screens.register.RegisterScreen
 import com.example.pawvet_1.ui.theme.PawVetBackground
@@ -54,6 +62,8 @@ import com.example.pawvet_1.ui.theme.PawVetBorder
 import com.example.pawvet_1.ui.theme.PawVetCoralGlow
 import com.example.pawvet_1.ui.theme.PawVetPrimary
 import com.example.pawvet_1.ui.theme.PawVetTextSecondary
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 private data class NavHudItem(
     val label: String,
@@ -64,21 +74,48 @@ private data class NavHudItem(
 
 @Composable
 fun PawVetAppShell(
-    navController: NavHostController
+    navController: NavHostController,
+    pendingRoute: String? = null,
+    onPendingRouteConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val sessionManager = remember { SessionManager(context.applicationContext) }
+    val appContainer = remember(context) {
+        (context.applicationContext as PawVetApplication).container
+    }
+    val sessionManager = remember {
+        appContainer.sessionManager
+    }
     val sessionState by sessionManager.sessionState.collectAsState()
+    val scope = rememberCoroutineScope()
     var authScreen by rememberSaveable { mutableStateOf(AuthScreen.Login.name) }
     var authError by rememberSaveable { mutableStateOf<String?>(null) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { }
+
+    LaunchedEffect(Unit) {
+        sessionManager.restoreSession()
+    }
+
+    LaunchedEffect(sessionState.isLoggedIn) {
+        if (sessionState.isLoggedIn && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     if (!sessionState.isLoggedIn) {
         PawVetAmbientBackground()
         when (AuthScreen.valueOf(authScreen)) {
             AuthScreen.Login -> LoginScreen(
                 onLoginClick = { email, password ->
-                    val result = sessionManager.login(email, password)
-                    authError = if (result.success) null else result.message
+                    if (!context.hasInternetConnection()) {
+                        authError = "Tu dispositivo no tiene conexión a internet en este momento."
+                        return@LoginScreen
+                    }
+                    scope.launchWithResult(
+                        action = { sessionManager.login(email, password) },
+                        onResult = { result -> authError = if (result.success) null else result.message }
+                    )
                 },
                 onRegisterClick = {
                     authError = null
@@ -89,8 +126,14 @@ fun PawVetAppShell(
 
             AuthScreen.Register -> RegisterScreen(
                 onRegisterClick = { name, email, password ->
-                    val result = sessionManager.register(name, email, password)
-                    authError = if (result.success) null else result.message
+                    if (!context.hasInternetConnection()) {
+                        authError = "Tu dispositivo no tiene conexión a internet en este momento."
+                        return@RegisterScreen
+                    }
+                    scope.launchWithResult(
+                        action = { sessionManager.register(name, email, password) },
+                        onResult = { result -> authError = if (result.success) null else result.message }
+                    )
                 },
                 onBackToLogin = {
                     authError = null
@@ -104,6 +147,15 @@ fun PawVetAppShell(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    LaunchedEffect(sessionState.isLoggedIn, pendingRoute) {
+        if (sessionState.isLoggedIn && !pendingRoute.isNullOrBlank()) {
+            navController.navigate(pendingRoute) {
+                launchSingleTop = true
+            }
+            onPendingRouteConsumed()
+        }
+    }
 
     val items = listOf(
         NavHudItem(
@@ -208,6 +260,7 @@ fun PawVetAppShell(
                         sessionManager.logout()
                         authScreen = AuthScreen.Login.name
                         authError = null
+                        NotificationHelper.cancelAllScheduledReminders(context)
                         navController.navigate(Screen.Home.route) {
                             popUpTo(navController.graph.id) { inclusive = true }
                         }
@@ -317,4 +370,13 @@ private fun NavDestination?.isOnRoute(prefix: String): Boolean {
 private enum class AuthScreen {
     Login,
     Register
+}
+
+private fun CoroutineScope.launchWithResult(
+    action: suspend () -> com.example.pawvet_1.data.session.AuthResult,
+    onResult: (com.example.pawvet_1.data.session.AuthResult) -> Unit
+) {
+    launch {
+        onResult(action())
+    }
 }

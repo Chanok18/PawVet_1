@@ -46,10 +46,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
+import com.example.pawvet_1.navigation.Screen
+import com.example.pawvet_1.ui.notifications.NotificationHelper
 import com.example.pawvet_1.ui.screens.citas.PremiumFormSection
 import com.example.pawvet_1.ui.theme.BlobBlue
 import com.example.pawvet_1.ui.theme.BlobCoral
@@ -71,6 +74,7 @@ fun ServicioFormScreen(
     mascotaViewModel: MascotaViewModel,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val mascotaState by mascotaViewModel.uiState.collectAsState()
     val servicioState by viewModel.uiState.collectAsState()
 
@@ -235,12 +239,23 @@ fun ServicioFormScreen(
             Button(
                 onClick = {
                     selectedMascotaId?.let { idMascota ->
+                        val finalDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(selectedFechaMillis))
+                        val mascotaNombre = mascotaState.listaMascotas.firstOrNull { it.id == idMascota }?.nombre ?: "tu mascota"
                         viewModel.guardarServicio(
                             id = servicioId,
                             mascotaId = idMascota,
                             tipo = selectedTipo,
-                            fecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(selectedFechaMillis)),
+                            fecha = finalDate,
                             hora = selectedHora
+                        )
+                        NotificationHelper.scheduleAppointmentReminder(
+                            context = context,
+                            uniqueName = NotificationHelper.buildReminderUniqueName("servicio", idMascota, finalDate, selectedHora),
+                            title = "Recordatorio de reserva estetica",
+                            body = "$mascotaNombre tiene $selectedTipo a las $selectedHora en PawVet.",
+                            date = finalDate,
+                            time = selectedHora,
+                            targetRoute = Screen.Perfil.route
                         )
                         onBack()
                     }

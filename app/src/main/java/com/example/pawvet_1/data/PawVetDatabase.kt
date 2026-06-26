@@ -13,7 +13,7 @@ import com.example.pawvet_1.data.model.Servicio
 
 @Database(
     entities = [Mascota::class, Cita::class, Servicio::class], 
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class PawVetDatabase : RoomDatabase() {

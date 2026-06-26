@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.pawvet_1" />
+                  <option name="mobileSdkAppId" value="1:404338226073:android:80fd7fe61230358f901908" />
+                  <option name="projectId" value="pawvet-b2334" />
+                  <option name="projectNumber" value="404338226073" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

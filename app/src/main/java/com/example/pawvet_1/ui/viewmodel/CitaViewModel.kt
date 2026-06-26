@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /** 
  * [MVVM - VIEWMODEL CITAS]
@@ -20,7 +23,10 @@ class CitaViewModel(private val repository: CitaRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(CitaUiState())
     val uiState: StateFlow<CitaUiState> = _uiState.asStateFlow()
 
-    init { listarCitas() }
+    init {
+        listarCitas()
+        refreshFromCloud()
+    }
 
     private fun listarCitas() {
         // - CORRUTINA: Busca los datos sin trabar la aplicación.
@@ -44,18 +50,53 @@ class CitaViewModel(private val repository: CitaRepository) : ViewModel() {
         _uiState.update { it.copy(citaSeleccionada = null) }
     }
 
+    fun limpiarMensajeError() {
+        _uiState.update { it.copy(mensajeError = null) }
+    }
+
     /**
      * [FLUJO]
      * VISTA (Click) -> VIEWMODEL (Guardar) -> REPOSITORY -> ROOM
      */
-    fun guardarCita(id: Int = 0, mascotaId: Int, fecha: String, hora: String, tipo: String) {
+    fun guardarCita(id: Int = 0, mascotaId: Int, fecha: String, hora: String, tipo: String): Boolean {
+        val mensajeError = validarCita(fecha = fecha, hora = hora, tipo = tipo)
+        if (mensajeError != null) {
+            _uiState.update { it.copy(mensajeError = mensajeError) }
+            return false
+        }
+
+        _uiState.update { it.copy(mensajeError = null) }
         viewModelScope.launch {
             val cita = Cita(id = id, mascotaId = mascotaId, fecha = fecha, hora = hora, tipo = tipo)
             if (id == 0) repository.insertCita(cita) else repository.updateCita(cita)
         }
+        return true
     }
 
     fun eliminarCita(cita: Cita) {
         viewModelScope.launch { repository.deleteCita(cita) }
+    }
+
+    fun refreshFromCloud() {
+        viewModelScope.launch {
+            runCatching { repository.refreshFromCloud() }
+        }
+    }
+
+    private fun validarCita(fecha: String, hora: String, tipo: String): String? {
+        if (tipo.isBlank()) return "Selecciona el motivo de la cita."
+        if (hora.isBlank()) return "Selecciona un horario para la cita."
+
+        val formatter = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.US).apply {
+            isLenient = false
+        }
+        val citaDate = runCatching { formatter.parse("$fecha $hora") }.getOrNull()
+            ?: return "La fecha u hora seleccionada no es valida."
+
+        return if (citaDate.before(Date())) {
+            "No puedes reservar citas en un horario pasado."
+        } else {
+            null
+        }
     }
 }

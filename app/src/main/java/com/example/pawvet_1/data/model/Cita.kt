@@ -7,7 +7,10 @@ import androidx.room.PrimaryKey
 data class Cita(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val mascotaId: Int, // Relación con la mascota
+    val remoteId: String = "",
+    val userId: String = "",
+    val mascotaId: Int,
+    val mascotaRemoteId: String = "",
     val fecha: String,
     val hora: String,
     val tipo: String

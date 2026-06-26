@@ -13,6 +13,8 @@ import androidx.room.PrimaryKey
 data class Mascota(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    val remoteId: String = "",
+    val userId: String = "",
     val nombre: String,
     val tipo: String = "Perro",
     val raza: String,

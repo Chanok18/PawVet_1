@@ -48,6 +48,7 @@ import com.example.pawvet_1.ui.components.PawVetBaseScreen
 import com.example.pawvet_1.ui.theme.PawVetAccent
 import com.example.pawvet_1.ui.theme.PawVetBorder
 import com.example.pawvet_1.ui.theme.PawVetBodyFont
+import com.example.pawvet_1.ui.theme.PawVetHeadingFont
 import com.example.pawvet_1.ui.theme.PawVetPrimary
 import com.example.pawvet_1.ui.theme.PawVetSurface
 import com.example.pawvet_1.ui.theme.PawVetTextPrimary
@@ -101,7 +102,7 @@ fun PerfilScreen(
             Text(
                 text = userName.ifBlank { "Cuenta PawVet" },
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontFamily = PawVetBodyFont,
+                    fontFamily = PawVetHeadingFont,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.sp
                 ),
@@ -191,7 +192,7 @@ private fun SectionHeader(title: String, onAddClick: (() -> Unit)? = null) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge.copy(
-                fontFamily = PawVetBodyFont,
+                fontFamily = PawVetHeadingFont,
                 fontWeight = FontWeight.ExtraBold
             ),
             color = PawVetTextPrimary

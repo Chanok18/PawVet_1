@@ -20,6 +20,7 @@ class ServicioViewModel(private val repository: ServicioRepository) : ViewModel(
 
     init {
         listarServicios()
+        refreshFromCloud()
     }
 
     private fun listarServicios() {
@@ -63,5 +64,11 @@ class ServicioViewModel(private val repository: ServicioRepository) : ViewModel(
 
     fun resetSeleccion() {
         _uiState.update { it.copy(servicioSeleccionado = null) }
+    }
+
+    fun refreshFromCloud() {
+        viewModelScope.launch {
+            runCatching { repository.refreshFromCloud() }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.pawvet_1.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -8,12 +9,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.pawvet_1.data.PawVetDatabase
-import com.example.pawvet_1.data.remote.RetrofitClient
-import com.example.pawvet_1.data.repository.BreedsRepository
-import com.example.pawvet_1.data.repository.CitaRepository
-import com.example.pawvet_1.data.repository.MascotaRepository
-import com.example.pawvet_1.data.repository.ServicioRepository
+import com.example.pawvet_1.PawVetApplication
 import com.example.pawvet_1.ui.screens.citas.CitaFormScreen
 import com.example.pawvet_1.ui.screens.citas.CitasScreen
 import com.example.pawvet_1.ui.screens.consultas.ConsultasRapidasScreen
@@ -36,11 +32,17 @@ fun PawVetNavGraph(
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
-    val database = PawVetDatabase.getDatabase(context)
-    val mascotaRepo = MascotaRepository(database.mascotaDao())
-    val citaRepo = CitaRepository(database.citaDao())
-    val servicioRepo = ServicioRepository(database.servicioDao())
-    val breedsRepo = BreedsRepository(RetrofitClient.dogApiService)
+    val appContainer = (context.applicationContext as PawVetApplication).container
+    val mascotaRepo = appContainer.mascotaRepository
+    val citaRepo = appContainer.citaRepository
+    val servicioRepo = appContainer.servicioRepository
+    val breedsRepo = appContainer.breedsRepository
+
+    LaunchedEffect(Unit) {
+        runCatching { mascotaRepo.refreshFromCloud() }
+        runCatching { citaRepo.refreshFromCloud() }
+        runCatching { servicioRepo.refreshFromCloud() }
+    }
 
     NavHost(
         navController = navController,
