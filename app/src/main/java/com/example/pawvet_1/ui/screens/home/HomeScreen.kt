@@ -1,29 +1,110 @@
 package com.example.pawvet_1.ui.screens.home
 
+import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pawvet_1.ui.components.PawVetBaseScreen
+import com.example.pawvet_1.R
+import com.example.pawvet_1.ui.theme.PawVetAccent
+import com.example.pawvet_1.ui.theme.PawVetBackground
+import com.example.pawvet_1.ui.theme.PawVetBodyFont
+import com.example.pawvet_1.ui.theme.PawVetBorder
+import com.example.pawvet_1.ui.theme.PawVetCoralGlow
+import com.example.pawvet_1.ui.theme.PawVetHeroGlow
+import com.example.pawvet_1.ui.theme.PawVetPrimary
+import com.example.pawvet_1.ui.theme.PawVetPrimaryDeep
+import com.example.pawvet_1.ui.theme.PawVetSecondary
+import com.example.pawvet_1.ui.theme.PawVetSuccess
+import com.example.pawvet_1.ui.theme.PawVetSuccessSoft
+import com.example.pawvet_1.ui.theme.PawVetSurface
+import com.example.pawvet_1.ui.theme.PawVetTextMuted
+import com.example.pawvet_1.ui.theme.PawVetTextPrimary
+import com.example.pawvet_1.ui.theme.PawVetTextSecondary
 
-/**
- * [VISTA - DASHBOARD]
- * - SCAFFOLD: Estructura base (TopBar + Contenido).
- * - COMPOSABLES: Column, Card, Row, Icon.
- * - NAVEGACIÓN: Botones que disparan eventos (Callbacks) para cambiar de pantalla.
- */
+private val HomeDisplayFont = PawVetBodyFont
+
+private data class MetricItem(
+    val value: String,
+    val label: String,
+    val color: Color,
+    val icon: @Composable () -> Unit
+)
+
+private data class ServiceItem(
+    val title: String,
+    val description: String,
+    val cta: String,
+    val tag: String,
+    @DrawableRes val imageRes: Int,
+    val tint: List<Color>,
+    val onClick: () -> Unit
+)
+
 @Composable
 fun HomeScreen(
     onCitasClick: () -> Unit,
@@ -31,158 +112,741 @@ fun HomeScreen(
     onConsultasClick: () -> Unit,
     onPerfilClick: () -> Unit
 ) {
-    PawVetBaseScreen(
-        title = "PawVet Dashboard",
-        onProfileClick = onPerfilClick
-    ) {
-        Column(
+    val metrics = listOf(
+        MetricItem("Excelente", "Salud general", PawVetSuccess) {
+            Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = PawVetSuccess, modifier = Modifier.size(18.dp))
+        },
+        MetricItem("12 días", "Próxima vacuna", PawVetPrimary) {
+            Icon(Icons.Default.DateRange, contentDescription = null, tint = PawVetPrimary, modifier = Modifier.size(18.dp))
+        },
+        MetricItem("8.2 kg", "Peso ideal", PawVetAccent) {
+            Icon(Icons.Default.Check, contentDescription = null, tint = PawVetAccent, modifier = Modifier.size(18.dp))
+        }
+    )
+
+    val services = listOf(
+        ServiceItem(
+            title = "Citas Médicas",
+            description = "Consultas, vacunas y chequeos con veterinarios certificados.",
+            cta = "Agendar cita",
+            tag = "Salud",
+            imageRes = R.drawable.medical,
+            tint = listOf(Color(0xFF244D53), Color(0x8A244D53), Color.Transparent),
+            onClick = onCitasClick
+        ),
+        ServiceItem(
+            title = "Servicios Estéticos",
+            description = "Baño, peluquería y spa para que luzca radiante y feliz.",
+            cta = "Reservar spa",
+            tag = "Bienestar",
+            imageRes = R.drawable.grooming,
+            tint = listOf(Color(0xFF71503D), Color(0x8F71503D), Color.Transparent),
+            onClick = onServiciosClick
+        ),
+        ServiceItem(
+            title = "Consulta IA",
+            description = "Respuestas inmediatas sobre síntomas y cuidados, 24/7.",
+            cta = "Preguntar ahora",
+            tag = "Inteligencia",
+            imageRes = R.drawable.ai_consult,
+            tint = listOf(Color(0xFF143E48), Color(0x99143E48), Color.Transparent),
+            onClick = onConsultasClick
+        )
+    )
+
+    Scaffold(
+        containerColor = PawVetBackground
+    ) { innerPadding ->
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.Start
+                .fillMaxSize()
+                .background(PawVetBackground)
         ) {
-            // Bienvenida
-            Text(
-                text = "¡Hola de nuevo! 🐾",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "¿En qué podemos ayudar a tu mascota hoy?",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
-            // - ORGANIZACIÓN: Lista de opciones tipo tarjetas.
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 18.dp)
+                    .padding(bottom = 108.dp)
             ) {
+                AnimatedEntrance(delayMillis = 0) {
+                    WelcomeHeader(onPerfilClick = onPerfilClick)
+                }
 
-                DashboardCard(
-                    title = "Citas",
-                    icon = Icons.Default.DateRange,
-                    description = "Agenda y gestiona tus visitas al veterinario",
-                    onClick = onCitasClick
-                )
-                DashboardCard(
-                    title = "Servicios",
-                    icon = Icons.Default.Star,
-                    description = "Explora spa, estética y cuidados especiales",
-                    onClick = onServiciosClick
-                )
-                DashboardCard(
-                    title = "Consultas",
-                    icon = Icons.Default.Email,
-                    description = "Resuelve dudas rápidas con PawBot AI",
-                    onClick = onConsultasClick
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Warning, 
-                        contentDescription = "Emergencia",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = "🚨 Atención Veterinaria 24h",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                            text = "Línea Directa: 0455-006",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
+                Spacer(Modifier.height(28.dp))
+
+                AnimatedEntrance(delayMillis = 80) {
+                    IntroHero()
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                AnimatedEntrance(delayMillis = 140) {
+                    WellnessStrip(metrics = metrics)
+                }
+
+                Spacer(Modifier.height(30.dp))
+
+                AnimatedEntrance(delayMillis = 210) {
+                    ServicesSection(services = services)
+                }
+
+                Spacer(Modifier.height(22.dp))
+
+                AnimatedEntrance(delayMillis = 300) {
+                    EmergencySection()
                 }
             }
-            
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 @Composable
-fun DashboardCard(
-    title: String,
-    icon: ImageVector,
-    description: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+private fun WelcomeHeader(onPerfilClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box {
+                Image(
+                    painter = painterResource(R.drawable.pet_avatar),
+                    contentDescription = "Tu mascota, Milo",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .border(2.dp, PawVetSurface, RoundedCornerShape(18.dp))
+                        .shadow(14.dp, RoundedCornerShape(18.dp), ambientColor = Color(0x1F284A46))
+                        .clickable { onPerfilClick() }
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 1.dp, y = 1.dp)
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(PawVetSuccess)
+                        .border(2.dp, PawVetBackground, CircleShape)
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = "Buenos días, Lucía",
+                    color = PawVetTextSecondary,
+                    fontFamily = PawVetBodyFont,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    letterSpacing = 0.2.sp
+                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = "PawVet",
+                        color = PawVetTextPrimary,
+                        fontFamily = HomeDisplayFont,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 27.sp,
+                        lineHeight = 27.sp,
+                        letterSpacing = (-0.5).sp
+                    )
+                    Text(
+                        text = ".",
+                        color = PawVetPrimary,
+                        fontFamily = HomeDisplayFont,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 26.sp
+                    )
+                }
+            }
+        }
+
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = PawVetSurface,
+            tonalElevation = 0.dp,
+            shadowElevation = 8.dp,
+            border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.7f)),
+            modifier = Modifier.size(44.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notificaciones",
+                    tint = PawVetTextPrimary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 11.dp, end = 11.dp)
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(PawVetAccent)
+                        .border(1.5.dp, PawVetSurface, CircleShape)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntroHero() {
+    Column {
+        Text(
+            text = "El cuidado que tu mascota merece, en un solo lugar.",
+            color = PawVetTextPrimary,
+            fontFamily = HomeDisplayFont,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 37.sp,
+            lineHeight = 40.sp,
+            letterSpacing = (-1.0).sp,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(Modifier.height(22.dp))
+
+        Surface(
+            shape = RoundedCornerShape(30.dp),
+            color = PawVetPrimary,
+            shadowElevation = 16.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(PawVetPrimaryDeep, PawVetPrimary),
+                            start = Offset.Zero,
+                            end = Offset(900f, 200f)
+                        )
+                    )
+                    .padding(20.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(170.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 50.dp, y = (-60).dp)
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(PawVetHeroGlow.copy(alpha = 0.50f), Color.Transparent),
+                                radius = 210f
+                            ),
+                            shape = CircleShape
+                        )
+                )
+
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = Color.White.copy(alpha = 0.14f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = "Próxima cita",
+                                    color = Color.White,
+                                    fontFamily = PawVetBodyFont,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "En 2 días",
+                            color = Color.White.copy(alpha = 0.74f),
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Spacer(Modifier.height(18.dp))
+
+                    Text(
+                        text = "Chequeo general · Milo",
+                        color = Color.White,
+                        fontFamily = HomeDisplayFont,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 28.sp,
+                        lineHeight = 30.sp,
+                        letterSpacing = (-0.6).sp
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.White.copy(alpha = 0.84f), modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Vie 27 Jun · 10:30",
+                            color = Color.White.copy(alpha = 0.84f),
+                            fontFamily = PawVetBodyFont,
+                            fontSize = 14.sp
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White.copy(alpha = 0.84f), modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Sede Centro",
+                            color = Color.White.copy(alpha = 0.84f),
+                            fontFamily = PawVetBodyFont,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Color.White.copy(alpha = 0.12f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Ver detalles de la cita",
+                                color = Color.White,
+                                fontFamily = PawVetBodyFont,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WellnessStrip(metrics: List<MetricItem>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        metrics.forEach { metric ->
             Surface(
-                modifier = Modifier.size(64.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.padding(16.dp),
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-            Spacer(modifier = Modifier.width(20.dp))
-            Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
+                shape = RoundedCornerShape(24.dp),
+                color = PawVetSurface,
+                border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.75f)),
+                shadowElevation = 8.dp
             ) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    maxLines = 2
-                )
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
+                ) {
+                    metric.icon()
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        text = metric.value,
+                        color = PawVetTextPrimary,
+                        fontFamily = PawVetBodyFont,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = metric.label,
+                        color = PawVetTextSecondary,
+                        fontFamily = PawVetBodyFont,
+                        fontSize = 11.sp,
+                        lineHeight = 14.sp,
+                        maxLines = 2
+                    )
+                }
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+        }
+    }
+}
+
+@Composable
+private fun ServicesSection(services: List<ServiceItem>) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                text = "Nuestros servicios",
+                fontFamily = HomeDisplayFont,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 28.sp,
+                lineHeight = 30.sp,
+                letterSpacing = (-0.5).sp,
+                color = PawVetTextPrimary
+            )
+            Text(
+                text = "Ver todo",
+                color = PawVetPrimary,
+                fontFamily = PawVetBodyFont,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp
             )
         }
+
+        Spacer(Modifier.height(16.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            services.forEach { service ->
+                ServiceCard(service = service)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServiceCard(service: ServiceItem) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(260.dp)
+            .clickable { service.onClick() },
+        shape = RoundedCornerShape(42.dp),
+        shadowElevation = 12.dp,
+        color = PawVetSurface
+    ) {
+        Box {
+            Image(
+                painter = painterResource(service.imageRes),
+                contentDescription = service.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                service.tint[1].copy(alpha = 0.20f),
+                                service.tint[0].copy(alpha = 0.78f)
+                            ),
+                            startY = 50f,
+                            endY = 760f
+                        )
+                    )
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.Top
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = Color(0x4D5E655D),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                        )
+                        Spacer(Modifier.width(7.dp))
+                        Text(
+                            text = service.tag,
+                            color = Color.White,
+                            fontFamily = PawVetBodyFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(22.dp))
+
+                Column(modifier = Modifier.fillMaxWidth(0.82f)) {
+                    Text(
+                        text = service.title,
+                        color = Color.White,
+                        fontFamily = HomeDisplayFont,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = if (service.title.length > 18) 23.sp else 29.sp,
+                        lineHeight = if (service.title.length > 18) 27.sp else 31.sp,
+                        letterSpacing = (-0.8).sp
+                    )
+                    Text(
+                        text = service.description,
+                        color = Color.White.copy(alpha = 0.82f),
+                        fontFamily = PawVetBodyFont,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp,
+                        lineHeight = 24.sp,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = PawVetSurface
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = service.cta,
+                                color = PawVetTextPrimary,
+                                fontFamily = HomeDisplayFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                letterSpacing = (-0.2).sp
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = PawVetTextPrimary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmergencySection() {
+    val pulseTransition = rememberInfiniteTransition(label = "emergency")
+    val pulseScale by pulseTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.18f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "emergencyScale"
+    )
+    val pulseAlpha by pulseTransition.animateFloat(
+        initialValue = 0.38f,
+        targetValue = 0.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1100, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "emergencyAlpha"
+    )
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        color = PawVetSurface,
+        border = BorderStroke(1.dp, PawVetAccent.copy(alpha = 0.22f)),
+        shadowElevation = 16.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(PawVetCoralGlow.copy(alpha = 0.30f), Color.Transparent),
+                        center = Offset(80f, 50f),
+                        radius = 220f
+                    )
+                )
+                .padding(18.dp)
+        ) {
+            Column {
+                Row(verticalAlignment = Alignment.Top) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .size(50.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .scale(pulseScale)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(PawVetAccent.copy(alpha = pulseAlpha))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(PawVetAccent),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Emergencias 24h",
+                                color = PawVetTextPrimary,
+                                fontFamily = HomeDisplayFont,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 24.sp,
+                                letterSpacing = (-0.5).sp
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = PawVetSuccessSoft
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(PawVetSuccess)
+                                    )
+                                    Spacer(Modifier.width(5.dp))
+                                    Text(
+                                        text = "En línea",
+                                        color = PawVetSuccess,
+                                        fontFamily = PawVetBodyFont,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            text = "Nuestro equipo veterinario está disponible a toda hora. Si es urgente, te conectamos de inmediato.",
+                            color = PawVetTextSecondary,
+                            fontFamily = PawVetBodyFont,
+                            fontSize = 14.sp,
+                            lineHeight = 21.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(18.dp),
+                        color = PawVetAccent,
+                        shadowElevation = 6.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Llamar ahora",
+                                color = Color.White,
+                                fontFamily = PawVetBodyFont,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = PawVetBackground,
+                        border = BorderStroke(1.dp, PawVetBorder)
+                    ) {
+                        Text(
+                            text = "Ubicar sede",
+                            color = PawVetTextPrimary,
+                            fontFamily = PawVetBodyFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimatedEntrance(
+    delayMillis: Int,
+    content: @Composable () -> Unit
+) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        visible = true
+    }
+
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 700, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "alpha"
+    )
+    val offsetY by animateFloatAsState(
+        targetValue = if (visible) 0f else 24f,
+        animationSpec = tween(durationMillis = 700, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "offset"
+    )
+
+    Box(
+        modifier = Modifier.graphicsLayer {
+            this.alpha = alpha
+            translationY = offsetY
+        }
+    ) {
+        content()
     }
 }

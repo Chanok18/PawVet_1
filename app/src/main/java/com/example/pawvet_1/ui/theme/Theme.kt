@@ -7,20 +7,21 @@ import androidx.compose.runtime.Composable
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
-    primaryContainer = PrimaryContainer,
-    onPrimaryContainer = OnPrimaryContainer,
+    // Eliminamos las referencias a Container y Variant que ya no existen
+    primaryContainer = Primary,
+    onPrimaryContainer = OnPrimary,
     secondary = Secondary,
     onSecondary = OnSecondary,
-    secondaryContainer = SecondaryContainer,
-    onSecondaryContainer = OnSecondaryContainer,
+    secondaryContainer = Secondary,
+    onSecondaryContainer = OnSecondary,
     tertiary = Tertiary,
-    onTertiary = OnTertiary,
+    onTertiary = OnPrimary,
     background = Background,
     onBackground = OnBackground,
     surface = Surface,
     onSurface = OnSurface,
-    surfaceVariant = SurfaceVariant,
-    onSurfaceVariant = OnSurfaceVariant,
+    surfaceVariant = Background,
+    onSurfaceVariant = OnBackground,
     error = Error,
     onError = OnError
 )

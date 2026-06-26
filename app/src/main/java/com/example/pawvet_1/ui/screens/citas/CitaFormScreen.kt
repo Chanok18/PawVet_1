@@ -1,7 +1,10 @@
 package com.example.pawvet_1.ui.screens.citas
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -10,8 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.pawvet_1.ui.theme.*
 import com.example.pawvet_1.ui.viewmodel.CitaViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 import java.text.SimpleDateFormat
@@ -28,27 +36,21 @@ fun CitaFormScreen(
     val uiState by citaViewModel.uiState.collectAsState()
     val mascotaState by mascotaViewModel.uiState.collectAsState()
 
-    // Estados del formulario
     var selectedMascotaId by remember { mutableStateOf<Int?>(null) }
     var selectedMotivo by remember { mutableStateOf("") }
     var selectedFechaMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var selectedHora by remember { mutableStateOf("") }
 
-    // Control de diálogos y menús
     var showDatePicker by remember { mutableStateOf(false) }
     var expandedMascotas by remember { mutableStateOf(false) }
     var expandedMotivos by remember { mutableStateOf(false) }
 
-    val motivos = listOf("Consulta General", "Vacunación", "Desparasitación", "Emergencia", "Control Médico", "Otro")
-    val horarios = listOf("09:00 AM", "10:00 AM", "11:00 AM", "03:00 PM", "04:00 PM", "05:00 PM")
+    val motivos = listOf("Consulta General", "Vacunación", "Desparasitación", "Control Médico", "Urgencia")
+    val horarios = listOf("09:00 AM", "10:30 AM", "12:00 PM", "02:30 PM", "04:00 PM", "05:30 PM")
+    val dateFormatter = SimpleDateFormat("EEEE, dd MMMM", Locale("es", "ES"))
 
-    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-
-    // Cargar datos en caso de edición
     LaunchedEffect(citaId) {
-        if (citaId != 0) {
-            citaViewModel.seleccionarCita(citaId)
-        }
+        if (citaId != 0) citaViewModel.seleccionarCita(citaId)
     }
 
     LaunchedEffect(uiState.citaSeleccionada) {
@@ -56,212 +58,160 @@ fun CitaFormScreen(
             selectedMascotaId = it.mascotaId
             selectedMotivo = it.tipo
             selectedHora = it.hora
-            try {
-                val date = dateFormatter.parse(it.fecha)
-                if (date != null) selectedFechaMillis = date.time
-            } catch (e: Exception) {
-                // Mantener fecha actual si falla el parseo
-            }
         }
     }
 
     Scaffold(
+        containerColor = PawVetBackground,
         topBar = {
             TopAppBar(
-                title = { Text(if (citaId == 0) "Agendar Cita Médica" else "Editar Cita Médica") },
+                title = { Text(if (citaId == 0) "Agendar Cita" else "Editar Cita", fontWeight = FontWeight.ExtraBold, color = PawVetTextPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = PawVetPrimary)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
-    ) { padding ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 1. Selección de Mascota
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Selecciona el paciente", style = MaterialTheme.typography.titleSmall)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    ExposedDropdownMenuBox(
-                        expanded = expandedMascotas,
-                        onExpandedChange = { expandedMascotas = !expandedMascotas }
-                    ) {
-                        val mascotaSeleccionada = mascotaState.listaMascotas.find { it.id == selectedMascotaId }
-                        OutlinedTextField(
-                            value = mascotaSeleccionada?.nombre ?: "Elige una mascota",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Paciente") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMascotas) },
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium
+            // SECCIÓN 1: PACIENTE
+            PremiumFormSection(title = "Paciente", icon = Icons.Default.Favorite, iconBg = BlobBlue) {
+                ExposedDropdownMenuBox(
+                    expanded = expandedMascotas,
+                    onExpandedChange = { expandedMascotas = !expandedMascotas }
+                ) {
+                    val mascota = mascotaState.listaMascotas.find { it.id == selectedMascotaId }
+                    OutlinedTextField(
+                        value = mascota?.nombre ?: "Selecciona tu mascota",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedMascotas) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PawVetPrimary,
+                            unfocusedBorderColor = Color.LightGray.copy(alpha = 0.5f)
                         )
-                        ExposedDropdownMenu(
-                            expanded = expandedMascotas,
-                            onDismissRequest = { expandedMascotas = false }
-                        ) {
-                            if (mascotaState.listaMascotas.isEmpty()) {
-                                DropdownMenuItem(
-                                    text = { Text("No hay mascotas registradas") },
-                                    onClick = { expandedMascotas = false }
-                                )
-                            } else {
-                                mascotaState.listaMascotas.forEach { mascota ->
-                                    DropdownMenuItem(
-                                        text = { Text("${mascota.nombre} (${mascota.raza})") },
-                                        onClick = {
-                                            selectedMascotaId = mascota.id
-                                            expandedMascotas = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 2. Motivo de la Cita
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Motivo de consulta", style = MaterialTheme.typography.titleSmall)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    ExposedDropdownMenuBox(
-                        expanded = expandedMotivos,
-                        onExpandedChange = { expandedMotivos = !expandedMotivos }
-                    ) {
-                        OutlinedTextField(
-                            value = selectedMotivo,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Servicio") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMotivos) },
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedMotivos,
-                            onDismissRequest = { expandedMotivos = false }
-                        ) {
-                            motivos.forEach { motivo ->
-                                DropdownMenuItem(
-                                    text = { Text(motivo) },
-                                    onClick = {
-                                        selectedMotivo = motivo
-                                        expandedMotivos = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3. Fecha y Hora
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Programación", style = MaterialTheme.typography.titleSmall)
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Fecha
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text("Día seleccionado:", style = MaterialTheme.typography.labelMedium)
-                            Text(dateFormatter.format(Date(selectedFechaMillis)), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                        }
-                        FilledTonalButton(onClick = { showDatePicker = true }) {
-                            Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Elegir")
-                        }
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
-                    // Hora
-                    Text("Horarios disponibles:", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(bottom = 8.dp))
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        horarios.forEach { hora ->
-                            FilterChip(
-                                selected = selectedHora == hora,
-                                onClick = { selectedHora = hora },
-                                label = { Text(hora) },
-                                leadingIcon = if (selectedHora == hora) {
-                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                } else null
+                    )
+                    ExposedDropdownMenu(expandedMascotas, { expandedMascotas = false }) {
+                        mascotaState.listaMascotas.forEach {
+                            DropdownMenuItem(
+                                text = { Text(it.nombre) },
+                                onClick = { selectedMascotaId = it.id; expandedMascotas = false }
                             )
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // SECCIÓN 2: MOTIVO
+            PremiumFormSection(title = "Motivo de Consulta", icon = Icons.Default.Edit, iconBg = BlobGreen) {
+                ExposedDropdownMenuBox(
+                    expanded = expandedMotivos,
+                    onExpandedChange = { expandedMotivos = !expandedMotivos }
+                ) {
+                    OutlinedTextField(
+                        value = selectedMotivo.ifEmpty { "Selecciona el motivo" },
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expandedMotivos) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PawVetPrimary,
+                            unfocusedBorderColor = Color.LightGray.copy(alpha = 0.5f)
+                        )
+                    )
+                    ExposedDropdownMenu(expandedMotivos, { expandedMotivos = false }) {
+                        motivos.forEach {
+                            DropdownMenuItem(
+                                text = { Text(it) },
+                                onClick = { selectedMotivo = it; expandedMotivos = false }
+                            )
+                        }
+                    }
+                }
+            }
 
-            // Botón de Acción
+            // SECCIÓN 3: FECHA
+            PremiumFormSection(title = "Fecha", icon = Icons.Default.DateRange, iconBg = BlobYellow) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = dateFormatter.format(Date(selectedFechaMillis)).replaceFirstChar { it.uppercase() },
+                            fontWeight = FontWeight.Bold,
+                            color = PawVetTextPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(Icons.Default.DateRange, null, tint = PawVetPrimary)
+                    }
+                }
+            }
+
+            // SECCIÓN 4: HORARIO (CHIPS)
+            PremiumFormSection(title = "Horario Disponible", icon = Icons.Default.Check, iconBg = BlobCoral) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    horarios.forEach { hora ->
+                        FilterChip(
+                            selected = selectedHora == hora,
+                            onClick = { selectedHora = hora },
+                            label = { Text(hora, modifier = Modifier.padding(vertical = 4.dp)) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = PawVetPrimary,
+                                selectedLabelColor = Color.White,
+                                containerColor = Color.White
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = if (selectedHora == hora) PawVetPrimary else Color.LightGray.copy(alpha = 0.5f),
+                                enabled = true,
+                                selected = selectedHora == hora
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // BOTÓN CONFIRMAR
             Button(
                 onClick = {
-                    selectedMascotaId?.let { idMascota ->
-                        citaViewModel.guardarCita(
-                            id = citaId,
-                            mascotaId = idMascota,
-                            fecha = dateFormatter.format(Date(selectedFechaMillis)),
-                            hora = selectedHora,
-                            tipo = selectedMotivo
-                        )
+                    selectedMascotaId?.let { id ->
+                        val finalDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(selectedFechaMillis))
+                        citaViewModel.guardarCita(citaId, id, finalDate, selectedHora, selectedMotivo)
                         onBack()
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(62.dp).shadow(12.dp, RoundedCornerShape(20.dp), ambientColor = PawVetPrimary),
                 enabled = selectedMascotaId != null && selectedMotivo.isNotBlank() && selectedHora.isNotBlank(),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PawVetPrimary)
             ) {
-                Icon(Icons.Default.Check, contentDescription = null)
-                Spacer(Modifier.width(12.dp))
-                Text("Confirmar Cita Médica", style = MaterialTheme.typography.titleMedium)
+                Text("Confirmar Cita Médica", fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
             }
+            Spacer(Modifier.height(20.dp))
         }
     }
 
-    // Diálogo del DatePicker
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedFechaMillis)
         DatePickerDialog(
@@ -270,13 +220,35 @@ fun CitaFormScreen(
                 TextButton(onClick = {
                     selectedFechaMillis = datePickerState.selectedDateMillis ?: selectedFechaMillis
                     showDatePicker = false
-                }) { Text("Confirmar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+                }) { Text("ACEPTAR", color = PawVetPrimary, fontWeight = FontWeight.Bold) }
             }
-        ) {
-            DatePicker(state = datePickerState)
+        ) { DatePicker(state = datePickerState) }
+    }
+}
+
+@Composable
+fun PremiumFormSection(
+    title: String,
+    icon: ImageVector,
+    iconBg: Color,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(modifier = Modifier.size(36.dp), shape = RoundedCornerShape(10.dp), color = iconBg) {
+                    Box(contentAlignment = Alignment.Center) { Icon(icon, null, modifier = Modifier.size(20.dp), tint = PawVetTextPrimary) }
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(text = title, fontWeight = FontWeight.ExtraBold, color = PawVetTextPrimary, fontSize = 16.sp)
+            }
+            Spacer(Modifier.height(16.dp))
+            content()
         }
     }
 }

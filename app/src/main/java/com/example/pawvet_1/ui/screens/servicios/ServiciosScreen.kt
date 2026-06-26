@@ -1,14 +1,28 @@
 package com.example.pawvet_1.ui.screens.servicios
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +36,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
+import com.example.pawvet_1.ui.theme.PawVetBorder
+import com.example.pawvet_1.ui.theme.PawVetPrimary
+import com.example.pawvet_1.ui.theme.PawVetSurface
+import com.example.pawvet_1.ui.theme.PawVetTextPrimary
+import com.example.pawvet_1.ui.theme.PawVetTextSecondary
 import com.example.pawvet_1.ui.viewmodel.BreedsViewModel
 import com.example.pawvet_1.ui.viewmodel.ImagesUiState
 
@@ -34,23 +53,15 @@ fun ServiciosScreen(
     val imagesState by viewModel.imagesUiState.collectAsState()
 
     PawVetBaseScreen(
-        title = "Estética y Spa",
+        title = "Servicios Estéticos",
         onBack = onBack
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Text(
-                text = "Catálogo de Estilos 🐾",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            
-            Text(
-                text = "Inspírate con nuestros cortes antes de agendar tu cita.",
+                text = "Explora estilos y acabados para elegir el look perfecto antes de reservar.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.padding(bottom = 20.dp)
+                color = PawVetTextSecondary,
+                modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)
             )
 
             Box(modifier = Modifier.weight(1f)) {
@@ -58,9 +69,10 @@ fun ServiciosScreen(
                     is ImagesUiState.Loading -> {
                         CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.primary
+                            color = PawVetPrimary
                         )
                     }
+
                     is ImagesUiState.Success -> {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
@@ -73,25 +85,32 @@ fun ServiciosScreen(
                             }
                         }
                     }
+
                     is ImagesUiState.Error -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Surface(
+                            modifier = Modifier.align(Alignment.Center),
+                            shape = RoundedCornerShape(28.dp),
+                            color = PawVetSurface,
+                            border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.75f)),
+                            shadowElevation = 10.dp
                         ) {
-                            Text(text = "❌", fontSize = 48.sp)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                state.message, 
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { viewModel.fetchServiceImages() },
-                                shape = RoundedCornerShape(12.dp)
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text("Reintentar")
+                                Text(
+                                    text = state.message,
+                                    color = PawVetTextPrimary,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Button(
+                                    onClick = { viewModel.fetchServiceImages() },
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = PawVetPrimary),
+                                    modifier = Modifier.padding(top = 14.dp)
+                                ) {
+                                    Text("Reintentar")
+                                }
                             }
                         }
                     }
@@ -104,18 +123,14 @@ fun ServiciosScreen(
                     .fillMaxWidth()
                     .height(56.dp)
                     .padding(top = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PawVetPrimary)
             ) {
                 Icon(Icons.Default.Star, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Agendar Cita de Estética",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "Reservar estética",
+                    modifier = Modifier.padding(start = 8.dp),
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }
@@ -123,13 +138,14 @@ fun ServiciosScreen(
 }
 
 @Composable
-fun StyleCard(imageUrl: String) {
-    ElevatedCard(
+private fun StyleCard(imageUrl: String) {
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+            .height(210.dp),
+        shape = RoundedCornerShape(28.dp),
+        shadowElevation = 8.dp,
+        color = PawVetSurface
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -138,41 +154,39 @@ fun StyleCard(imageUrl: String) {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
-            
-            // Overlay degradado para texto
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
-                            startY = 300f
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.58f)),
+                            startY = 250f
                         )
                     )
             )
-            
-            // Badge flotante
+
             Surface(
                 modifier = Modifier
                     .padding(12.dp)
-                    .align(Alignment.TopEnd),
-                color = MaterialTheme.colorScheme.tertiaryContainer,
-                shape = RoundedCornerShape(8.dp)
+                    .align(Alignment.TopStart),
+                color = Color.White.copy(alpha = 0.85f),
+                shape = RoundedCornerShape(999.dp)
             ) {
                 Text(
                     text = "Top",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    color = PawVetTextPrimary
                 )
             }
 
             Text(
-                text = "Estilo Sugerido",
+                text = "Estilo sugerido",
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(12.dp),
+                    .padding(14.dp),
                 color = Color.White,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold

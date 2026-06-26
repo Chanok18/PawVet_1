@@ -1,38 +1,56 @@
 package com.example.pawvet_1.ui.screens.perfil
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pawvet_1.data.model.Cita
 import com.example.pawvet_1.data.model.Mascota
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
+import com.example.pawvet_1.ui.theme.PawVetAccent
+import com.example.pawvet_1.ui.theme.PawVetBorder
+import com.example.pawvet_1.ui.theme.PawVetPrimary
+import com.example.pawvet_1.ui.theme.PawVetSurface
+import com.example.pawvet_1.ui.theme.PawVetTextPrimary
+import com.example.pawvet_1.ui.theme.PawVetTextSecondary
 import com.example.pawvet_1.ui.viewmodel.CitaViewModel
 import com.example.pawvet_1.ui.viewmodel.MascotaViewModel
 
-/**
- * PANTALLA DE PERFIL (LISTA): Centraliza la visualización de datos.
- * Esta pantalla actúa como la "Pantalla de Lista" requerida por el proyecto,
- * mostrando los registros de Mascotas y Citas obtenidos de Room.
- */
 @Composable
 fun PerfilScreen(
     mascotaViewModel: MascotaViewModel,
@@ -43,54 +61,54 @@ fun PerfilScreen(
     onEditMascotaClick: (Int) -> Unit,
     onEditCitaClick: (Int) -> Unit
 ) {
-    // Observamos los estados de los ViewModels (MVVM)
     val mascotaState by mascotaViewModel.uiState.collectAsState()
     val citaState by citaViewModel.uiState.collectAsState()
 
     PawVetBaseScreen(
-        title = "Mi Perfil PawVet",
+        title = "Mi Perfil",
         onBack = onBack
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 110.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header del Usuario
-            Box(
+            Surface(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+                    .padding(top = 10.dp)
+                    .size(118.dp),
+                shape = CircleShape,
+                color = Color.White,
+                border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.8f)),
+                shadowElevation = 10.dp
             ) {
-                Icon(
-                    Icons.Default.Person, 
-                    contentDescription = null, 
-                    modifier = Modifier.size(56.dp), 
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Favorite, contentDescription = null, tint = PawVetPrimary, modifier = Modifier.size(52.dp))
+                }
             }
-            
-            Text(
-                text = "Usuario Administrador",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
 
-            // 1. SECCIÓN: MIS MASCOTAS (CRUD: Leer, Editar, Eliminar)
-            SectionHeader(title = "Mis Mascotas 🐾", onAddClick = onAddMascotaClick)
-            
+            Text(
+                text = "Administrador PawVet",
+                style = MaterialTheme.typography.titleLarge,
+                color = PawVetTextPrimary,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+            Text(
+                text = "Todo el historial y cuidado de tus mascotas, en un solo lugar.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = PawVetTextSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 6.dp, bottom = 26.dp)
+            )
+
+            SectionHeader(
+                title = "Mis Mascotas",
+                onAddClick = onAddMascotaClick
+            )
             if (mascotaState.listaMascotas.isEmpty()) {
-                Text(
-                    text = "No hay mascotas registradas", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = Color.Gray
-                )
+                EmptyStateCard("No tienes mascotas registradas.")
             } else {
                 mascotaState.listaMascotas.forEach { mascota ->
                     MascotaItem(
@@ -102,17 +120,11 @@ fun PerfilScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // 2. SECCIÓN: CITAS PROGRAMADAS (CRUD Citas)
-            SectionHeader(title = "Próximas Citas 📅")
-            
+            SectionHeader(title = "Próximas Citas")
             if (citaState.listaCitas.isEmpty()) {
-                Text(
-                    text = "No tienes citas pendientes", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = Color.Gray
-                )
+                EmptyStateCard("No hay citas programadas.")
             } else {
                 citaState.listaCitas.forEach { cita ->
                     CitaItem(
@@ -122,64 +134,128 @@ fun PerfilScreen(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
 
 @Composable
-fun SectionHeader(title: String, onAddClick: (() -> Unit)? = null) {
+private fun SectionHeader(title: String, onAddClick: (() -> Unit)? = null) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = PawVetTextPrimary
+        )
         if (onAddClick != null) {
-            IconButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir", tint = MaterialTheme.colorScheme.primary)
+            Button(
+                onClick = onAddClick,
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PawVetPrimary)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Text("Agregar", modifier = Modifier.padding(start = 6.dp))
             }
         }
     }
 }
 
 @Composable
-fun MascotaItem(mascota: Mascota, onClick: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+private fun EmptyStateCard(message: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = PawVetSurface,
+        border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.8f)),
+        shadowElevation = 8.dp
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(text = if (mascota.tipo == "Gato") "🐱" else "🐶", fontSize = 24.sp)
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = mascota.nombre, fontWeight = FontWeight.Bold)
-                Text(text = mascota.raza, style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = PawVetTextSecondary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun MascotaItem(mascota: Mascota, onClick: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(26.dp),
+        color = PawVetSurface,
+        border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.8f)),
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(50.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = if (mascota.tipo.lowercase().contains("gato")) "🐱" else "🐶", fontSize = 28.sp)
             }
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp)) }
-            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error) }
+            Spacer(modifier = Modifier.size(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = mascota.nombre, style = MaterialTheme.typography.titleMedium, color = PawVetTextPrimary)
+                Text(text = mascota.raza, style = MaterialTheme.typography.bodyMedium, color = PawVetTextSecondary)
+            }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = null, tint = PawVetPrimary)
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = null, tint = PawVetAccent)
+            }
         }
     }
 }
 
 @Composable
-fun CitaItem(cita: Cita, onEdit: () -> Unit, onDelete: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
+private fun CitaItem(cita: Cita, onEdit: () -> Unit, onDelete: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        shape = RoundedCornerShape(26.dp),
+        color = PawVetSurface,
+        border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.8f)),
+        shadowElevation = 8.dp
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = cita.tipo, fontWeight = FontWeight.Bold)
-                Text(text = "${cita.fecha} - ${cita.hora}", style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier.padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(50.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.DateRange, contentDescription = null, tint = PawVetPrimary)
             }
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp)) }
-            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error) }
+            Spacer(modifier = Modifier.size(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = cita.tipo, style = MaterialTheme.typography.titleMedium, color = PawVetTextPrimary)
+                Text(text = "${cita.fecha} · ${cita.hora}", style = MaterialTheme.typography.bodyMedium, color = PawVetTextSecondary)
+            }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = null, tint = PawVetPrimary)
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = null, tint = PawVetAccent)
+            }
         }
     }
 }
