@@ -47,6 +47,7 @@ import com.example.pawvet_1.data.model.Servicio
 import com.example.pawvet_1.ui.components.PawVetBaseScreen
 import com.example.pawvet_1.ui.theme.PawVetAccent
 import com.example.pawvet_1.ui.theme.PawVetBorder
+import com.example.pawvet_1.ui.theme.PawVetBodyFont
 import com.example.pawvet_1.ui.theme.PawVetPrimary
 import com.example.pawvet_1.ui.theme.PawVetSurface
 import com.example.pawvet_1.ui.theme.PawVetTextPrimary
@@ -99,13 +100,20 @@ fun PerfilScreen(
 
             Text(
                 text = userName.ifBlank { "Cuenta PawVet" },
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = PawVetBodyFont,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 24.sp
+                ),
                 color = PawVetTextPrimary,
                 modifier = Modifier.padding(top = 16.dp)
             )
             Text(
                 text = "Todo el historial y cuidado de tus mascotas, en un solo lugar.",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontFamily = PawVetBodyFont,
+                    fontWeight = FontWeight.Medium
+                ),
                 color = PawVetTextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)
@@ -182,7 +190,10 @@ private fun SectionHeader(title: String, onAddClick: (() -> Unit)? = null) {
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontFamily = PawVetBodyFont,
+                fontWeight = FontWeight.ExtraBold
+            ),
             color = PawVetTextPrimary
         )
         if (onAddClick != null) {

@@ -115,9 +115,11 @@ fun PawVetAppShell(
             },
             onClick = {
                 navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Home.route) { saveState = true }
+                    popUpTo(navController.graph.startDestinationId) {
+                        saveState = false
+                    }
                     launchSingleTop = true
-                    restoreState = true
+                    restoreState = false
                 }
             }
         ) { selected ->

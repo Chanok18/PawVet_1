@@ -9,7 +9,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
@@ -53,10 +53,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pawvet_1.R
@@ -71,6 +67,11 @@ import com.example.pawvet_1.ui.theme.PawVetSuccessSoft
 import com.example.pawvet_1.ui.theme.PawVetSurface
 import com.example.pawvet_1.ui.theme.PawVetTextPrimary
 import com.example.pawvet_1.ui.theme.PawVetTextSecondary
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 
 private val HomeDisplayFont = PawVetBodyFont
 
@@ -180,70 +181,89 @@ private fun WelcomeHeader(
     userName: String,
     onPerfilClick: () -> Unit
 ) {
-    val displayName = userName.substringBefore(" ").ifBlank { "Junior" }
+    val displayName = userName.substringBefore(" ").ifBlank { "junior" }
 
-    Row(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        shape = RoundedCornerShape(28.dp),
+        color = Color.White.copy(alpha = 0.9f),
+        border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.8f)),
+        shadowElevation = 10.dp
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box {
-                Image(
-                    painter = painterResource(R.drawable.pet_avatar),
-                    contentDescription = "Tu mascota, Milo",
-                    contentScale = ContentScale.Crop,
+                Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .border(2.dp, PawVetSurface, RoundedCornerShape(18.dp))
-                        .shadow(14.dp, RoundedCornerShape(18.dp), ambientColor = Color(0x1F284A46))
-                        .clickable { onPerfilClick() }
-                )
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(Color(0xFFEAF9F5), Color(0xFFD6F1EB))
+                            )
+                        )
+                        .border(1.dp, PawVetBorder.copy(alpha = 0.9f), RoundedCornerShape(20.dp))
+                        .clickable { onPerfilClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Perfil de usuario",
+                        tint = PawVetPrimary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .offset(x = 1.dp, y = 1.dp)
-                        .size(12.dp)
+                        .offset(x = 2.dp, y = 2.dp)
+                        .size(13.dp)
                         .clip(CircleShape)
                         .background(PawVetSuccess)
-                        .border(2.dp, PawVetBackground, CircleShape)
+                        .border(2.dp, Color.White, CircleShape)
                 )
             }
 
-            Spacer(Modifier.width(12.dp))
-
-            Column {
-                Text(
-                    text = "Buenos días, $displayName",
-                    color = PawVetTextSecondary,
-                    fontFamily = PawVetBodyFont,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp,
-                    letterSpacing = 0.2.sp
-                )
-                Row(verticalAlignment = Alignment.Bottom) {
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = PawVetPrimary.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = "PawVet",
+                            color = PawVetPrimary,
+                            fontFamily = PawVetBodyFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            letterSpacing = 0.2.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "PawVet",
+                        text = displayName,
                         color = PawVetTextPrimary,
                         fontFamily = HomeDisplayFont,
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 27.sp,
-                        lineHeight = 27.sp,
-                        letterSpacing = (-0.5).sp
-                    )
-                    Text(
-                        text = ".",
-                        color = PawVetPrimary,
-                        fontFamily = HomeDisplayFont,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 26.sp
+                        fontSize = 31.sp,
+                        lineHeight = 32.sp,
+                        letterSpacing = (-0.8).sp
                     )
                 }
             }
-        }
 
-        Spacer(Modifier.size(44.dp))
+            Spacer(Modifier.width(56.dp))
+        }
     }
 }
 
@@ -499,7 +519,6 @@ private fun EmergencySection() {
                                             .clip(CircleShape)
                                             .background(PawVetSuccess)
                                     )
-
                                 }
                             }
                         }
@@ -507,13 +526,12 @@ private fun EmergencySection() {
                             text = "Nuestro equipo veterinario está disponible a toda hora. Si es urgente, te conectamos de inmediato.",
                             color = PawVetTextSecondary,
                             fontFamily = PawVetBodyFont,
-                            fontSize = 14.sp,
-                            lineHeight = 21.sp,
-                            modifier = Modifier.padding(top = 4.dp)
+                            fontSize = 15.sp,
+                            lineHeight = 23.sp,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
                 }
-
             }
         }
     }
@@ -526,24 +544,25 @@ private fun AnimatedEntrance(
 ) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(delayMillis.toLong())
         visible = true
     }
 
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 700, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
         label = "alpha"
     )
-    val offsetY by animateFloatAsState(
-        targetValue = if (visible) 0f else 24f,
-        animationSpec = tween(durationMillis = 700, delayMillis = delayMillis, easing = FastOutSlowInEasing),
-        label = "offset"
+    val translateY by animateFloatAsState(
+        targetValue = if (visible) 0f else 26f,
+        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+        label = "translateY"
     )
 
     Box(
         modifier = Modifier.graphicsLayer {
             this.alpha = alpha
-            translationY = offsetY
+            translationY = translateY
         }
     ) {
         content()
