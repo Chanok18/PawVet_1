@@ -25,21 +25,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
@@ -64,7 +55,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -75,25 +65,14 @@ import com.example.pawvet_1.ui.theme.PawVetBackground
 import com.example.pawvet_1.ui.theme.PawVetBodyFont
 import com.example.pawvet_1.ui.theme.PawVetBorder
 import com.example.pawvet_1.ui.theme.PawVetCoralGlow
-import com.example.pawvet_1.ui.theme.PawVetHeroGlow
 import com.example.pawvet_1.ui.theme.PawVetPrimary
-import com.example.pawvet_1.ui.theme.PawVetPrimaryDeep
-import com.example.pawvet_1.ui.theme.PawVetSecondary
 import com.example.pawvet_1.ui.theme.PawVetSuccess
 import com.example.pawvet_1.ui.theme.PawVetSuccessSoft
 import com.example.pawvet_1.ui.theme.PawVetSurface
-import com.example.pawvet_1.ui.theme.PawVetTextMuted
 import com.example.pawvet_1.ui.theme.PawVetTextPrimary
 import com.example.pawvet_1.ui.theme.PawVetTextSecondary
 
 private val HomeDisplayFont = PawVetBodyFont
-
-private data class MetricItem(
-    val value: String,
-    val label: String,
-    val color: Color,
-    val icon: @Composable () -> Unit
-)
 
 private data class ServiceItem(
     val title: String,
@@ -112,18 +91,6 @@ fun HomeScreen(
     onConsultasClick: () -> Unit,
     onPerfilClick: () -> Unit
 ) {
-    val metrics = listOf(
-        MetricItem("Excelente", "Salud general", PawVetSuccess) {
-            Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = PawVetSuccess, modifier = Modifier.size(18.dp))
-        },
-        MetricItem("12 días", "Próxima vacuna", PawVetPrimary) {
-            Icon(Icons.Default.DateRange, contentDescription = null, tint = PawVetPrimary, modifier = Modifier.size(18.dp))
-        },
-        MetricItem("8.2 kg", "Peso ideal", PawVetAccent) {
-            Icon(Icons.Default.Check, contentDescription = null, tint = PawVetAccent, modifier = Modifier.size(18.dp))
-        }
-    )
-
     val services = listOf(
         ServiceItem(
             title = "Citas Médicas",
@@ -157,49 +124,51 @@ fun HomeScreen(
     Scaffold(
         containerColor = PawVetBackground
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(PawVetBackground)
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .padding(bottom = 108.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 18.dp)
-                    .padding(bottom = 108.dp)
-            ) {
-                AnimatedEntrance(delayMillis = 0) {
-                    WelcomeHeader(onPerfilClick = onPerfilClick)
-                }
+            AnimatedEntrance(delayMillis = 0) {
+                WelcomeHeader(onPerfilClick = onPerfilClick)
+            }
 
-                Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(28.dp))
 
-                AnimatedEntrance(delayMillis = 80) {
-                    IntroHero()
-                }
+            AnimatedEntrance(delayMillis = 80) {
+                HeroHeadline()
+            }
 
-                Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
 
-                AnimatedEntrance(delayMillis = 140) {
-                    WellnessStrip(metrics = metrics)
-                }
+            AnimatedEntrance(delayMillis = 130) {
+                ServicesSection(services = services)
+            }
 
-                Spacer(Modifier.height(30.dp))
+            Spacer(Modifier.height(22.dp))
 
-                AnimatedEntrance(delayMillis = 210) {
-                    ServicesSection(services = services)
-                }
-
-                Spacer(Modifier.height(22.dp))
-
-                AnimatedEntrance(delayMillis = 300) {
-                    EmergencySection()
-                }
+            AnimatedEntrance(delayMillis = 160) {
+                EmergencySection()
             }
         }
     }
+}
+
+@Composable
+private fun HeroHeadline() {
+    Text(
+        text = "El cuidado que tu mascota merece, en un solo lugar.",
+        color = PawVetTextPrimary,
+        fontFamily = HomeDisplayFont,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 37.sp,
+        lineHeight = 40.sp,
+        letterSpacing = (-1.0).sp,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable
@@ -209,9 +178,7 @@ private fun WelcomeHeader(onPerfilClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box {
                 Image(
                     painter = painterResource(R.drawable.pet_avatar),
@@ -267,229 +234,7 @@ private fun WelcomeHeader(onPerfilClick: () -> Unit) {
             }
         }
 
-        Surface(
-            shape = RoundedCornerShape(18.dp),
-            color = PawVetSurface,
-            tonalElevation = 0.dp,
-            shadowElevation = 8.dp,
-            border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.7f)),
-            modifier = Modifier.size(44.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notificaciones",
-                    tint = PawVetTextPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 11.dp, end = 11.dp)
-                        .size(7.dp)
-                        .clip(CircleShape)
-                        .background(PawVetAccent)
-                        .border(1.5.dp, PawVetSurface, CircleShape)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun IntroHero() {
-    Column {
-        Text(
-            text = "El cuidado que tu mascota merece, en un solo lugar.",
-            color = PawVetTextPrimary,
-            fontFamily = HomeDisplayFont,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 37.sp,
-            lineHeight = 40.sp,
-            letterSpacing = (-1.0).sp,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(22.dp))
-
-        Surface(
-            shape = RoundedCornerShape(30.dp),
-            color = PawVetPrimary,
-            shadowElevation = 16.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(PawVetPrimaryDeep, PawVetPrimary),
-                            start = Offset.Zero,
-                            end = Offset(900f, 200f)
-                        )
-                    )
-                    .padding(20.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(170.dp)
-                        .align(Alignment.TopEnd)
-                        .offset(x = 50.dp, y = (-60).dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(PawVetHeroGlow.copy(alpha = 0.50f), Color.Transparent),
-                                radius = 210f
-                            ),
-                            shape = CircleShape
-                        )
-                )
-
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(999.dp),
-                            color = Color.White.copy(alpha = 0.14f)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White)
-                                )
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    text = "Próxima cita",
-                                    color = Color.White,
-                                    fontFamily = PawVetBodyFont,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-
-                        Text(
-                            text = "En 2 días",
-                            color = Color.White.copy(alpha = 0.74f),
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    Spacer(Modifier.height(18.dp))
-
-                    Text(
-                        text = "Chequeo general · Milo",
-                        color = Color.White,
-                        fontFamily = HomeDisplayFont,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 28.sp,
-                        lineHeight = 30.sp,
-                        letterSpacing = (-0.6).sp
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.White.copy(alpha = 0.84f), modifier = Modifier.size(17.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "Vie 27 Jun · 10:30",
-                            color = Color.White.copy(alpha = 0.84f),
-                            fontFamily = PawVetBodyFont,
-                            fontSize = 14.sp
-                        )
-                        Spacer(Modifier.width(16.dp))
-                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White.copy(alpha = 0.84f), modifier = Modifier.size(17.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "Sede Centro",
-                            color = Color.White.copy(alpha = 0.84f),
-                            fontFamily = PawVetBodyFont,
-                            fontSize = 14.sp
-                        )
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color.White.copy(alpha = 0.12f),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Ver detalles de la cita",
-                                color = Color.White,
-                                fontFamily = PawVetBodyFont,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun WellnessStrip(metrics: List<MetricItem>) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        metrics.forEach { metric ->
-            Surface(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(24.dp),
-                color = PawVetSurface,
-                border = BorderStroke(1.dp, PawVetBorder.copy(alpha = 0.75f)),
-                shadowElevation = 8.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
-                ) {
-                    metric.icon()
-                    Spacer(Modifier.height(14.dp))
-                    Text(
-                        text = metric.value,
-                        color = PawVetTextPrimary,
-                        fontFamily = PawVetBodyFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = metric.label,
-                        color = PawVetTextSecondary,
-                        fontFamily = PawVetBodyFont,
-                        fontSize = 11.sp,
-                        lineHeight = 14.sp,
-                        maxLines = 2
-                    )
-                }
-            }
-        }
+        Spacer(Modifier.size(44.dp))
     }
 }
 
@@ -498,7 +243,7 @@ private fun ServicesSection(services: List<ServiceItem>) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.Bottom
         ) {
             Text(
@@ -509,13 +254,6 @@ private fun ServicesSection(services: List<ServiceItem>) {
                 lineHeight = 30.sp,
                 letterSpacing = (-0.5).sp,
                 color = PawVetTextPrimary
-            )
-            Text(
-                text = "Ver todo",
-                color = PawVetPrimary,
-                fontFamily = PawVetBodyFont,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
             )
         }
 
@@ -752,14 +490,7 @@ private fun EmergencySection() {
                                             .clip(CircleShape)
                                             .background(PawVetSuccess)
                                     )
-                                    Spacer(Modifier.width(5.dp))
-                                    Text(
-                                        text = "En línea",
-                                        color = PawVetSuccess,
-                                        fontFamily = PawVetBodyFont,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 10.sp
-                                    )
+
                                 }
                             }
                         }
@@ -774,49 +505,6 @@ private fun EmergencySection() {
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Surface(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(18.dp),
-                        color = PawVetAccent,
-                        shadowElevation = 6.dp
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Phone, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Llamar ahora",
-                                color = Color.White,
-                                fontFamily = PawVetBodyFont,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = PawVetBackground,
-                        border = BorderStroke(1.dp, PawVetBorder)
-                    ) {
-                        Text(
-                            text = "Ubicar sede",
-                            color = PawVetTextPrimary,
-                            fontFamily = PawVetBodyFont,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)
-                        )
-                    }
-                }
             }
         }
     }
