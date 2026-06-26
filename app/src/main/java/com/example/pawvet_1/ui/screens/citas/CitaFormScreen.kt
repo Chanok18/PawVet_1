@@ -291,6 +291,15 @@ fun CitaFormScreen(
                             tipo = selectedMotivo
                         )
                         if (citaGuardada) {
+                            if (citaId == 0) {
+                                NotificationHelper.showAppointmentCreatedNotification(
+                                    context = context,
+                                    mascotaNombre = mascotaNombre,
+                                    date = selectedDateText,
+                                    time = selectedHora,
+                                    targetRoute = Screen.Citas.route
+                                )
+                            }
                             NotificationHelper.scheduleAppointmentReminder(
                                 context = context,
                                 uniqueName = NotificationHelper.buildReminderUniqueName(

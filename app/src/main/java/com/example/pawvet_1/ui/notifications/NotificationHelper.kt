@@ -5,7 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Data
@@ -91,6 +93,8 @@ object NotificationHelper {
         body: String,
         targetRoute: String
     ) {
+        if (!canPostNotifications(context)) return
+
         val intent = Intent(context, MainActivity::class.java).apply {
             putExtra(EXTRA_TARGET_ROUTE, targetRoute)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -114,6 +118,22 @@ object NotificationHelper {
             .build()
 
         NotificationManagerCompat.from(context).notify(notificationId, notification)
+    }
+
+    fun showAppointmentCreatedNotification(
+        context: Context,
+        mascotaNombre: String,
+        date: String,
+        time: String,
+        targetRoute: String
+    ) {
+        showNotification(
+            context = context,
+            notificationId = "created-$mascotaNombre-$date-$time".hashCode(),
+            title = "Cita registrada",
+            body = "La cita de $mascotaNombre fue registrada para el $date a las $time.",
+            targetRoute = targetRoute
+        )
     }
 
     fun buildReminderUniqueName(prefix: String, mascotaId: Int, date: String, time: String): String {
@@ -144,5 +164,19 @@ object NotificationHelper {
 
     private fun prefixFromUniqueName(uniqueName: String): String {
         return uniqueName.substringBefore("-")
+    }
+
+    private fun canPostNotifications(context: Context): Boolean {
+        val notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return notificationsEnabled
+        }
+
+        val permissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return notificationsEnabled && permissionGranted
     }
 }
