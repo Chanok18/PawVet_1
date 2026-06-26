@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.pawvet_1.firebase.FirestoreManager
+import com.google.firebase.messaging.FirebaseMessaging
 
 /**
  * VIEWMODEL DE AUTENTICACIÓN: Gestiona el estado de la sesión y las operaciones de Login/Registro.
@@ -45,7 +47,28 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
             _uiState.update { it.copy(estaCargando = true, mensajeError = null) }
             try {
                 val usuario = authRepository.iniciarSesion(correo, contrasena)
-                _uiState.update { it.copy(usuario = usuario, estaCargando = false) }
+
+// Si el login fue exitoso
+                usuario?.let { firebaseUser ->
+
+                    FirebaseMessaging.getInstance().token
+                        .addOnSuccessListener { token ->
+
+                            FirestoreManager.guardarToken(
+                                firebaseUser.uid,
+                                token
+                            )
+
+                        }
+
+                }
+
+                _uiState.update {
+                    it.copy(
+                        usuario = usuario,
+                        estaCargando = false
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(mensajeError = e.localizedMessage, estaCargando = false) }
             }

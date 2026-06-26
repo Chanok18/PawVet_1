@@ -20,6 +20,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.pawvet_1.navigation.PawVetNavGraph
 import com.example.pawvet_1.ui.theme.PawVet_1Theme
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.auth.FirebaseAuth
+import com.example.pawvet_1.firebase.FirestoreManager
 
 class MainActivity : ComponentActivity() {
 
@@ -67,12 +69,34 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun obtenerTokenFCM() {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                return@addOnCompleteListener
-            }
-            val token = task.result
-            println("FCM_TOKEN: $token") // Esto saldrá en tu Logcat para probar Push
+
+        val usuario = FirebaseAuth.getInstance().currentUser
+
+        // Verificamos que exista un usuario autenticado
+        if (usuario == null) {
+            println("No hay usuario autenticado")
+            return
         }
+
+        FirebaseMessaging.getInstance().token
+            .addOnCompleteListener { task ->
+
+                if (!task.isSuccessful) {
+                    println("No se pudo obtener el token FCM")
+                    return@addOnCompleteListener
+                }
+
+                val token = task.result
+
+                println("FCM_TOKEN: $token")
+
+                // Guardar el token en Firestore
+                FirestoreManager.guardarToken(
+                    usuario.uid,
+                    token
+                )
+
+                println("Token guardado en Firestore")
+            }
     }
 }

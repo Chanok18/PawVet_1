@@ -20,6 +20,7 @@ class CitaViewModel(
     private val _uiState = MutableStateFlow(CitaUiState())
     val uiState: StateFlow<CitaUiState> = _uiState.asStateFlow()
 
+
     private var currentListingJob: Job? = null
 
     /**
@@ -53,6 +54,7 @@ class CitaViewModel(
     }
 
     fun guardarCita(
+
         id: Int = 0,
         mascotaId: Int,
         fecha: String,
@@ -60,7 +62,10 @@ class CitaViewModel(
         tipo: String
     ) {
         viewModelScope.launch {
-
+            val uid = com.google.firebase.auth.FirebaseAuth
+                .getInstance()
+                .currentUser
+                ?.uid ?: ""
             val citaActual = _uiState.value.citaSeleccionada
 
             val cita = Cita(
@@ -69,7 +74,7 @@ class CitaViewModel(
                 fecha = fecha,
                 hora = hora,
                 tipo = tipo,
-                usuarioId = citaActual?.usuarioId ?: "",
+                usuarioId = uid,
                 idFirestore = citaActual?.idFirestore ?: ""
             )
 
